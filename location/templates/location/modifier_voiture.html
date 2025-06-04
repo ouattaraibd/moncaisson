@@ -1,0 +1,63 @@
+{% extends 'location/base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Modifier le véhicule</h2>
+    
+    <form method="post" enctype="multipart/form-data" class="g-3">
+        {% csrf_token %}
+        
+        <!-- Section Photo -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Photo actuelle</label>
+                <div class="card">
+                    <div class="card-body text-center">
+                        {% if form.instance.photo and file_exists %}
+                            <img src="{{ form.instance.photo.url }}" 
+                                 class="img-fluid rounded" 
+                                 style="max-height: 300px;">
+                        {% else %}
+                            <div class="alert alert-warning py-4">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Aucune image disponible
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="id_photo" class="form-label fw-bold">Changer l'image</label>
+                <input type="file" name="photo" 
+                       class="form-control" 
+                       id="id_photo" 
+                       accept="image/*">
+                <small class="text-muted">Laisser vide pour conserver l'image actuelle</small>
+            </div>
+        </div>
+        
+        <!-- Autres champs -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                {{ form.marque|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+                {{ form.modele|as_crispy_field }}
+            </div>
+        </div>
+        
+        <!-- Boutons -->
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary me-2">
+                <i class="fas fa-save me-1"></i> Enregistrer
+            </button>
+            <a href="{% url 'proprietaire_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i> Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

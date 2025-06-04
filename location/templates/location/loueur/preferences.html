@@ -1,0 +1,32 @@
+{% extends "location/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-cog me-2"></i> Mes préférences</h2>
+        <a href="{% url 'loueur_dashboard' %}" class="btn btn-outline-orange">
+            <i class="fas fa-arrow-left me-1"></i> Retour
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% crispy form %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-check-input:checked {
+        background-color: #fd7e14;
+        border-color: #fd7e14;
+    }
+    .form-check-label {
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends "location/base.html" %}
+{% load static humanize %}
+
+{% block content %}
+{% if not voiture %}
+<div class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    La voiture demandée n'existe pas ou a été supprimée
+    <div class="mt-2">
+        <a href="{% url 'accueil' %}" class="btn btn-outline-danger">
+            <i class="fas fa-home me-1"></i> Retour à l'accueil
+        </a>
+        <a href="{% url 'liste_voitures' %}" class="btn btn-danger ms-2">
+            <i class="fas fa-car me-1"></i> Voir nos véhicules
+        </a>
+    </div>
+</div>
+{% else %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-orange sidebar collapse">
+            <div class="position-sticky pt-3">
+                <div class="text-center mb-4">
+                    <img src="{% if user.profile.photo %}{{ user.profile.photo.url }}{% else %}{% static 'location/images/default-avatar.jpg' %}{% endif %}" 
+                         alt="Photo profil" width="100" class="rounded-circle">
+                    <h4 class="mt-2 text-white">{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-white-50">Loueur</p>
+                    
+                    <!-- Badge de confiance -->
+                    {% include "location/partials/trust_badge.html" with trust_score=user.trust_score trust_metrics=user.trust_metrics %}
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'loueur_dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#mes-reservations">
+                            <i class="fas fa-calendar-alt me-2"></i> Mes réservations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#favoris">
+                            <i class="fas fa-heart me-2"></i> Favoris
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'modifier_profil' %}">
+                            <i class="fas fa-user-cog me-2"></i> Mon profil
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Réservation</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{% url 'recherche' %}" class="btn btn-sm btn-outline-orange">
+                        <i class="fas fa-search me-1"></i> Trouver une voiture
+                    </a>
+                </div>
+            </div>
+
+            <!-- Messages d'erreur du formulaire -->
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Messages système -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Formulaire de réservation -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Réserver {{ voiture.marque }} {{ voiture.modele }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="reservation-form">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.date_debut.id_for_label }}" class="form-label">Date de début</label>
+                                {{ form.date_debut }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.date_fin.id_for_label }}" class="form-label">Date de fin</label>
+                                {{ form.date_fin }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="chauffeur-check" 
+                                       {% if voiture.avec_chauffeur %}checked{% endif %} disabled>
+                                <label class="form-check-label" for="chauffeur-check">
+                                    Avec chauffeur (+{{ voiture.prix_chauffeur|default:0|intcomma }} XOF/jour)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Section Livraison -->
+                        <div class="card mt-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-truck me-2"></i>
+                                    Options de livraison
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="avec_livraison" 
+                                           id="id_avec_livraison"
+                                           {% if form.avec_livraison.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_avec_livraison">
+                                        Livraison du véhicule demandée
+                                    </label>
+                                </div>
+                                
+                                <div id="livraison-fields" style="display: {% if form.avec_livraison.value %}block{% else %}none{% endif %};">
+                                    <div class="mb-3">
+                                        <label for="id_delivery_option" class="form-label">Mode de livraison</label>
+                                        <select name="delivery_option" id="id_delivery_option" class="form-select">
+                                            {% for option in delivery_options %}
+                                            <option value="{{ option.id }}" 
+                                                    {% if form.delivery_option.value == option.id %}selected{% endif %}>
+                                                {{ option.name }} - {{ option.price|intcomma }} XOF
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="id_adresse_livraison" class="form-label">Adresse complète</label>
+                                        <textarea name="adresse_livraison" 
+                                                id="id_adresse_livraison"
+                                                class="form-control"
+                                                rows="3">{{ form.adresse_livraison.value|default:'' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'voiture_detail' pk=voiture.id %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-1"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-orange">
+                                <i class="fas fa-check me-1"></i> Confirmer la réservation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-footer bg-light">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Détails du véhicule</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Prix journalier:</strong> {{ voiture.prix_jour|intcomma }} XOF</li>
+                                <li><strong>Type:</strong> {{ voiture.get_type_vehicule_display }}</li>
+                                <li><strong>Localisation:</strong> {{ voiture.ville }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Calcul du prix</h6>
+                            <div id="price-calculation">
+                                <p class="mb-1">Prix de base: <span id="base-price">0</span> XOF</p>
+                                {% if voiture.avec_chauffeur %}
+                                <p class="mb-1">Prix chauffeur: <span id="driver-price">0</span> XOF</p>
+                                {% endif %}
+                                <p class="mb-1">Frais de service (10%): <span id="service-fee">0</span> XOF</p>
+                                <p class="mb-1">Frais de livraison: <span id="delivery-price">0</span> XOF</p>
+                                <p class="fw-bold mt-2">Total: <span id="total-price">0</span> XOF</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de l'affichage des champs de livraison
+    const livraisonCheckbox = document.getElementById('id_avec_livraison');
+    const livraisonFields = document.getElementById('livraison-fields');
+    
+    if (livraisonCheckbox) {
+        livraisonCheckbox.addEventListener('change', function(e) {
+            livraisonFields.style.display = e.target.checked ? 'block' : 'none';
+            calculatePrice();
+        });
+    }
+
+    // Calcul automatique du prix
+    function calculatePrice() {
+        const startDate = new Date(document.getElementById('id_date_debut').value);
+        const endDate = new Date(document.getElementById('id_date_fin').value);
+        
+        if (startDate && endDate && startDate < endDate) {
+            const diffTime = Math.abs(endDate - startDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Calcul du prix de base
+            const basePrice = diffDays * {{ voiture.prix_jour }};
+            document.getElementById('base-price').textContent = basePrice.toLocaleString('fr-FR');
+            
+            // Calcul du prix chauffeur si applicable
+            {% if voiture.avec_chauffeur %}
+            const driverPrice = diffDays * {{ voiture.prix_chauffeur|default:0 }};
+            document.getElementById('driver-price').textContent = driverPrice.toLocaleString('fr-FR');
+            var subTotal = basePrice + driverPrice;
+            {% else %}
+            var subTotal = basePrice;
+            {% endif %}
+            
+            // Calcul des frais de livraison si applicable
+            let deliveryPrice = 0;
+            if (livraisonCheckbox && livraisonCheckbox.checked) {
+                const selectedOption = document.getElementById('id_delivery_option');
+                deliveryPrice = parseInt(selectedOption.options[selectedOption.selectedIndex].text.split('-')[1].trim());
+                document.getElementById('delivery-price').textContent = deliveryPrice.toLocaleString('fr-FR');
+            } else {
+                document.getElementById('delivery-price').textContent = '0';
+            }
+            
+            // Calcul des frais de service (10%)
+            const serviceFee = Math.round(subTotal * 0.10);
+            document.getElementById('service-fee').textContent = serviceFee.toLocaleString('fr-FR');
+            
+            // Calcul du total final
+            const totalPrice = subTotal + serviceFee + deliveryPrice;
+            document.getElementById('total-price').textContent = totalPrice.toLocaleString('fr-FR');
+        }
+    }
+    
+    // Écouteurs d'événements
+    document.getElementById('id_date_debut').addEventListener('change', calculatePrice);
+    document.getElementById('id_date_fin').addEventListener('change', calculatePrice);
+    
+    if (document.getElementById('id_delivery_option')) {
+        document.getElementById('id_delivery_option').addEventListener('change', calculatePrice);
+    }
+    
+    // Calcul initial
+    calculatePrice();
+    
+    // Validation des dates
+    const today = new Date();
+    today.setDate(today.getDate() + 1);
+    document.getElementById('id_date_debut').min = today.toISOString().split('T')[0];
+    
+    const maxDate = new Date();
+    maxDate.setFullYear(maxDate.getFullYear() + 1);
+    document.getElementById('id_date_debut').max = maxDate.toISOString().split('T')[0];
+    document.getElementById('id_date_fin').max = maxDate.toISOString().split('T')[0];
+    
+    document.getElementById('id_date_debut').addEventListener('change', function() {
+        const startDate = new Date(this.value);
+        if (startDate) {
+            const minEndDate = new Date(startDate);
+            minEndDate.setDate(minEndDate.getDate() + 1);
+            document.getElementById('id_date_fin').min = minEndDate.toISOString().split('T')[0];
+        }
+    });
+});
+</script>
+{% endblock %}

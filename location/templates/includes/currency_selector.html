@@ -1,0 +1,10 @@
+<div class="dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+    {% if request.session.currency == 'XOF' %} CFA {% else %} {{ request.session.currency }} {% endif %}
+  </button>
+  <ul class="dropdown-menu">
+    <li><a class="dropdown-item" href="?currency=XOF">🇨🇮 XOF (Franc CFA)</a></li>
+    <li><a class="dropdown-item" href="?currency=EUR">🇪🇺 EUR (Euro)</a></li>
+    <li><a class="dropdown-item" href="?currency=USD">🇺🇸 USD (Dollar)</a></li>
+  </ul>
+</div>

@@ -1,0 +1,215 @@
+{% extends "location/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Inscription Propriétaire</h3>
+                </div>
+                <div class="card-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Erreurs :</strong>
+                        <ul>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <li>{{ field|title }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="id_first_name" class="form-label">Prénom*</label>
+                                    {{ form.first_name }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="id_last_name" class="form-label">Nom*</label>
+                                    {{ form.last_name }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="id_date_naissance" class="form-label">Date de naissance*</label>
+                                    {{ form.date_naissance }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_username" class="form-label">Nom d'utilisateur*</label>
+                                    {{ form.username }}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_email" class="form-label">Email*</label>
+                                    {{ form.email }}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_phone" class="form-label">Téléphone*</label>
+                                    {{ form.phone }}
+                                    <small class="text-muted">Format: +225XXXXXXXX ou 0XXXXXXXX</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_password1" class="form-label">Mot de passe*</label>
+                                    {{ form.password1 }}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_password2" class="form-label">Confirmation*</label>
+                                    {{ form.password2 }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_city" class="form-label">Ville*</label>
+                                    {{ form.city }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_country" class="form-label">Pays*</label>
+                                    {{ form.country }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_cin" class="form-label">Numéro CIN*</label>
+                                    {{ form.cin }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_address" class="form-label">Adresse complète*</label>
+                                    {{ form.address }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SUPPRIMÉ: Section Documents requis -->
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" required id="conditions_proprietaire" name="accept_conditions">
+                            <label class="form-check-label" for="conditions_proprietaire">
+                                J'accepte les <a href="#" data-bs-toggle="modal" data-bs-target="#conditionsModal">conditions générales pour propriétaires</a>
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" required id="privacy_policy">
+                            <label class="form-check-label" for="privacy_policy">
+                                J'accepte la <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">politique de confidentialité</a>
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i> S'inscrire
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conditions -->
+<div class="modal fade" id="conditionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conditions pour propriétaires</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% include "policies/proprietaire_policy.html" %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Politique de confidentialité -->
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Politique de confidentialité</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% include "policies/privacy_policy.html" %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const conditionsCheckbox = document.getElementById('conditions_proprietaire');
+    const privacyCheckbox = document.getElementById('privacy_policy');
+    
+    function validateForm() {
+        const conditionsAccepted = conditionsCheckbox.checked;
+        const privacyAccepted = privacyCheckbox.checked;
+        
+        if (!conditionsAccepted || !privacyAccepted) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('btn-danger');
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i> Acceptez les conditions';
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-user-plus me-2"></i> S\'inscrire';
+            submitBtn.classList.add('btn-primary');
+            submitBtn.classList.remove('btn-danger');
+        }
+    }
+    
+    // Validation initiale
+    validateForm();
+    
+    // Écouteurs d'événements
+    conditionsCheckbox.addEventListener('change', validateForm);
+    privacyCheckbox.addEventListener('change', validateForm);
+    
+    // Validation avant soumission
+    form.addEventListener('submit', function(e) {
+        if (!conditionsCheckbox.checked || !privacyCheckbox.checked) {
+            e.preventDefault();
+            alert('Veuillez accepter les conditions générales et la politique de confidentialité');
+        }
+    });
+});
+</script>
+{% endblock %}

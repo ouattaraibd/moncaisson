@@ -1,0 +1,559 @@
+<!-- location/templates/location/partials/trust_badge.html -->
+<div class="trust-container">
+    <div class="trust-badge" data-score="{{ trust_score|default:0 }}">
+        <!-- Header Section -->
+        <div class="trust-header">
+            <i class="fas fa-shield-alt trust-icon"></i>
+            <span class="trust-title">
+                {% if user.user_type == 'LOUEUR' or not user.user_type %}Score Conducteur{% else %}Score Propriétaire{% endif %}
+            </span>
+            <span class="trust-value">{{ trust_score|default:0 }}/100</span>
+            {% if trust_score >= 75 and user.user_type == 'LOUEUR' or trust_score >= 80 and user.user_type == 'PROPRIETAIRE' %}
+            <span class="trust-verified-badge">
+                <i class="fas fa-check-circle"></i> Vérifié
+            </span>
+            {% endif %}
+        </div>
+        
+        {% if trust_score is not none %}
+        <!-- Progress Meter -->
+        <div class="trust-meter">
+            <div class="trust-fill" style="width: {{ trust_score|default:0 }}%"></div>
+            <div class="trust-labels">
+                <span>0</span>
+                <span>50</span>
+                <span>100</span>
+            </div>
+        </div>
+        
+        <!-- Tooltip Content -->
+        <div class="trust-tooltip">
+            <!-- Trust Level -->
+            <div class="trust-level">
+                <i class="fas fa-level-up-alt"></i> Niveau: 
+                <strong>{{ trust_score|default:0|trust_level }}</strong>
+                <span class="trust-level-badge" style="background-color: {{ trust_score|default:0|trust_level_color }}">
+                    {{ trust_score|default:0|trust_level_percentage }}% des utilisateurs
+                </span>
+            </div>
+            
+            <!-- Badges Section -->
+            <div class="trust-badges-section">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-medal"></i> Progression des Badges</h5>
+                    {% if user.loyalty_profile %}
+                    <span class="badge bg-orange">
+                        {{ user.loyalty_profile.badges|length }}/{{ user.loyalty_profile.BADGE_TIERS|length }}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                {% if user.loyalty_profile and user.loyalty_profile.badges %}
+                <div class="trust-badges-grid">
+                    {% for badge in user.loyalty_profile.badges|slice:":6" %}
+                    <div class="trust-badge-item" 
+                         data-badge="{{ badge.code|default:'' }}"
+                         data-toggle="tooltip" 
+                         title="{{ badge.description|default:'Badge' }}"
+                         style="--badge-color: {{ badge.color|default:'#fd7e14' }};">
+                        <div class="trust-badge-icon">
+                            <i class="fas {{ badge.icon|default:'fa-medal' }}"></i>
+                        </div>
+                        <div class="trust-badge-info">
+                            <strong>{{ badge.name|default:'Badge' }}</strong>
+                            {% if badge.type|default:'standard' == 'standard' %}
+                            <div class="progress mt-1" style="height: 3px;">
+                                <div class="progress-bar" 
+                                     style="width: {{ badge.progress|default:0 }}%; 
+                                            background-color: {{ badge.color|default:'#fd7e14' }};">
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="trust-no-badges">
+                    <i class="fas fa-{% if user.loyalty_profile %}inbox{% else %}lock{% endif %} fa-2x"></i>
+                    <p class="mt-2">
+                        {% if user.loyalty_profile %}
+                        Aucun badge obtenu
+                        {% else %}
+                        Système de badges non activé
+                        {% endif %}
+                    </p>
+                    <small>
+                        {% if user.user_type == 'LOUEUR' %}
+                        Effectuez des locations pour débloquer des badges
+                        {% else %}
+                        Louez vos véhicules pour débloquer des badges
+                        {% endif %}
+                    </small>
+                </div>
+                {% endif %}
+                
+                {% if user.loyalty_profile %}
+                <div class="text-center mt-2">
+                    <a href="{% url 'badge_list'|default:'#' %}" class="btn btn-sm btn-outline-orange">
+                        <i class="fas fa-chevron-right me-1"></i> Voir tous mes badges
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Trust Factors -->
+            <div class="trust-factors">
+                <h5><i class="fas fa-chart-pie me-2"></i>Composition du score</h5>
+                <ul class="trust-factors-list">
+                    {% if trust_metrics and trust_metrics.factors %}
+                        {% for factor, data in trust_metrics.factors.items %}
+                        <li class="trust-factor">
+                            <div class="factor-header">
+                                <div class="factor-icon">
+                                    <i class="fas {{ data.icon|default:'fa-circle' }}"></i>
+                                    <span class="factor-name">
+                                        {% if user.user_type == 'LOUEUR' %}
+                                            {{ factor|loueur_factor_name|default:factor }}
+                                        {% else %}
+                                            {{ factor|proprio_factor_name|default:factor }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <span class="factor-value">{{ data.value|default:0|floatformat:1 }}/{{ data.max|default:10 }}</span>
+                            </div>
+                            <div class="factor-bar-container">
+                                <div class="factor-bar">
+                                    <div class="factor-progress" 
+                                         style="width: {{ data.value|default:0|factor_percentage:data.max|default:10 }}%; 
+                                                background-color: {{ data.color|default:'var(--orange)' }};">
+                                    </div>
+                                </div>
+                                <small class="factor-impact">Impact: {{ data.impact|default:0 }}%</small>
+                            </div>
+                            <div class="factor-desc">
+                                <small>{{ data.description|default:'Aucune description disponible' }}</small>
+                                {% if data.tip %}
+                                <div class="factor-tip">
+                                    <i class="fas fa-lightbulb"></i> 
+                                    {% if user.user_type == 'LOUEUR' %}
+                                        {{ data.tip|loueur_tip_filter|default:'' }}
+                                    {% else %}
+                                        {{ data.tip|proprio_tip_filter|default:'' }}
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Votre score sera calculé après votre première activité
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <!-- Improvement Tips -->
+            <div class="trust-tip">
+                <div class="trust-tip-header">
+                    <i class="fas fa-magic"></i>
+                    <h5>Conseils personnalisés</h5>
+                </div>
+                <div class="trust-tip-content">
+                    {% if user.user_type == 'LOUEUR' %}
+                        {{ trust_score|default:0|loueur_improvement_tips|default:"Complétez votre profil de conducteur pour améliorer votre score" }}
+                    {% else %}
+                        {{ trust_score|default:0|proprio_improvement_tips|default:"Complétez votre profil propriétaire pour améliorer votre score" }}
+                    {% endif %}
+                </div>
+                <div class="trust-actions mt-3">
+                    <a href="{% if user.user_type == 'LOUEUR' %}{% url 'modifier_profil' %}{% else %}{% url 'proprietaire_profil' %}{% endif %}" 
+                       class="btn btn-sm btn-orange me-2">
+                        <i class="fas fa-bolt"></i> Améliorer mon profil
+                    </a>
+                    <a href="{% url 'help_center' %}" class="btn btn-sm btn-outline-orange">
+                        <i class="fas fa-question-circle"></i> Aide
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- No Data State -->
+        <div class="trust-no-data">
+            <i class="fas fa-chart-line"></i>
+            <p>Votre score apparaîtra ici après votre première activité</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .trust-container {
+        --trust-red: #ff4d4d;
+        --trust-orange: #fd7e14;
+        --trust-green: #28a745;
+        --trust-blue: #17a2b8;
+        --trust-gray: #6c757d;
+        --trust-light: #f8f9fa;
+        --trust-dark: #212529;
+        
+        margin: 1rem 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .trust-badge {
+        position: relative;
+        width: 100%;
+        max-width: 320px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.1);
+        overflow: hidden;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        transition: all 0.3s ease;
+    }
+    
+    .trust-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+    
+    .trust-header {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .trust-icon {
+        font-size: 20px;
+        color: var(--trust-orange);
+        margin-right: 10px;
+        transition: color 0.3s ease;
+    }
+    
+    .trust-title {
+        flex: 1;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--trust-dark);
+    }
+    
+    .trust-value {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--trust-dark);
+    }
+    
+    .trust-verified-badge {
+        margin-left: 8px;
+        padding: 2px 6px;
+        background-color: var(--trust-green);
+        color: white;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .trust-meter {
+        height: 10px;
+        background: #f0f0f0;
+        position: relative;
+        margin: 0 15px;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    
+    .trust-fill {
+        height: 100%;
+        background: linear-gradient(90deg, 
+            var(--trust-red) 0%, 
+            var(--trust-orange) 50%, 
+            var(--trust-green) 100%);
+        transition: width 0.5s ease;
+    }
+    
+    .trust-labels {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 15px;
+        font-size: 0.7rem;
+        color: var(--trust-gray);
+    }
+    
+    .trust-tooltip {
+        padding: 15px;
+    }
+    
+    .trust-level {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .trust-level-badge {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .trust-badges-section {
+        margin: 20px 0;
+        padding: 15px;
+        background: rgba(0,0,0,0.03);
+        border-radius: 8px;
+        border: 1px dashed rgba(0,0,0,0.1);
+    }
+    
+    .trust-badges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        margin: 10px 0;
+    }
+    
+    .trust-badge-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border-left: 3px solid var(--badge-color);
+        cursor: pointer;
+    }
+    
+    .trust-badge-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+    
+    .trust-badge-icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        color: var(--badge-color);
+    }
+    
+    .trust-badge-info {
+        flex: 1;
+    }
+    
+    .trust-badge-info strong {
+        display: block;
+        font-size: 0.8rem;
+        line-height: 1.2;
+        color: var(--trust-dark);
+    }
+    
+    .trust-no-badges, .trust-no-data {
+        text-align: center;
+        padding: 15px;
+        color: var(--trust-gray);
+    }
+    
+    .trust-no-data i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: var(--trust-blue);
+    }
+    
+    .trust-factors-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .trust-factor {
+        margin-bottom: 15px;
+    }
+    
+    .factor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    
+    .factor-icon {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .factor-name {
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+    
+    .factor-value {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .factor-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .factor-bar {
+        flex: 1;
+        height: 6px;
+        background: #f0f0f0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .factor-progress {
+        height: 100%;
+        border-radius: 3px;
+    }
+    
+    .factor-impact {
+        font-size: 0.7rem;
+        color: var(--trust-gray);
+        width: 40px;
+        text-align: right;
+    }
+    
+    .factor-desc {
+        font-size: 0.75rem;
+        color: var(--trust-gray);
+        margin-top: 3px;
+    }
+    
+    .factor-tip {
+        font-size: 0.7rem;
+        color: var(--trust-orange);
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .trust-tip {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(253, 126, 20, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid var(--trust-orange);
+    }
+    
+    .trust-tip-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .trust-tip-header h5 {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    
+    .trust-tip-content {
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    
+    .trust-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    /* Dynamic colors based on score */
+    .trust-badge[data-score^="0"] .trust-icon,
+    .trust-badge[data-score^="1"] .trust-icon,
+    .trust-badge[data-score^="2"] .trust-icon,
+    .trust-badge[data-score^="3"] .trust-icon,
+    .trust-badge[data-score^="4"] .trust-icon {
+        color: var(--trust-red);
+    }
+    
+    .trust-badge[data-score^="5"] .trust-icon,
+    .trust-badge[data-score^="6"] .trust-icon {
+        color: var(--trust-orange);
+    }
+    
+    .trust-badge[data-score^="7"] .trust-icon,
+    .trust-badge[data-score^="8"] .trust-icon,
+    .trust-badge[data-score^="9"] .trust-icon {
+        color: var(--trust-green);
+    }
+    
+    @media (max-width: 576px) {
+        .trust-badges-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .trust-badge {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Initialize tooltips if Bootstrap is available
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            const tooltipElements = document.querySelectorAll('[data-toggle="tooltip"]');
+            tooltipElements.forEach(el => new bootstrap.Tooltip(el));
+        }
+
+        // Animate all progress bars
+        const progressBars = document.querySelectorAll('.factor-progress, .trust-fill, .progress-bar');
+        progressBars.forEach(bar => {
+            const targetWidth = bar.style.width || '0%';
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = targetWidth;
+                bar.style.transition = 'width 0.8s ease-out';
+            }, 100);
+        });
+
+        // Dynamic icon coloring based on score
+        const trustBadges = document.querySelectorAll('.trust-badge');
+        trustBadges.forEach(badge => {
+            const score = parseInt(badge.dataset.score) || 0;
+            const icon = badge.querySelector('.trust-icon');
+            
+            if (score >= 75) {
+                icon.style.color = 'var(--trust-green)';
+            } else if (score >= 50) {
+                icon.style.color = 'var(--trust-orange)';
+            } else {
+                icon.style.color = 'var(--trust-red)';
+            }
+        });
+
+        // Click handler for badge items
+        const badgeItems = document.querySelectorAll('.trust-badge-item');
+        badgeItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const badgeCode = this.dataset.badge;
+                console.log('Badge clicked:', badgeCode);
+                // Add your custom badge click handling here
+            });
+        });
+
+    } catch (error) {
+        console.error('Error initializing trust badge:', error);
+    }
+});
+</script>

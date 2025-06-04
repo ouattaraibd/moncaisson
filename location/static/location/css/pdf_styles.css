@@ -1,0 +1,38 @@
+/* Styles très simples pour le PDF */
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #000;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th {
+    background-color: #fd7e14;
+    color: white;
+    padding: 5px;
+    text-align: left;
+}
+
+td {
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.footer {
+    margin-top: 30px;
+    font-size: 10px;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}

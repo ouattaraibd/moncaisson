@@ -1,0 +1,271 @@
+{% extends "admin/base_site.html" %}
+{% load static humanize %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin/css/super-dashboard.css' %}">
+<style>
+    .dashboard {
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e1e1e1;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0;
+        color: #417690;
+    }
+    .stat-details {
+        display: flex;
+        justify-content: space-between;
+    }
+    .detail-item {
+        background: #f8f8f8;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    .recent-activity {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+    .activity-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .activity-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 15px;
+    }
+    .activity-list li {
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        background: #f9f9f9;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+    }
+    .activity-list li:hover {
+        background: #f0f0f0;
+    }
+    .activity-meta {
+        color: #666;
+        font-size: 0.85rem;
+    }
+    .action-link {
+        color: #417690;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .quick-actions {
+        margin-top: 40px;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 15px;
+    }
+    .btn {
+        display: inline-block;
+        padding: 8px 15px;
+        background: #417690;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background 0.3s;
+    }
+    .btn:hover {
+        background: #305f77;
+    }
+    .btn-admin {
+        background: #666;
+    }
+    .btn-primary {
+        background: #5b80b2;
+    }
+    .chart-container {
+        margin-top: 30px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="super-dashboard">
+    <header class="dashboard-header">
+        <h1>{{ dashboard_title }} <small>{{ current_date|date:"d/m/Y" }}</small></h1>
+        <div class="admin-actions">
+            <a href="{% url 'admin:index' %}" class="btn btn-admin">Admin Classique</a>
+            <a href="{% url 'admin:location_user_add' %}" class="btn btn-primary">+ Nouvel Utilisateur</a>
+        </div>
+    </header>
+
+    <div class="stats-grid">
+        <!-- Carte Utilisateurs -->
+        <div class="stat-card">
+            <h2><i class="icon-user"></i> Utilisateurs</h2>
+            <div class="stat-value">{{ stats.users.total|intcomma }}</div>
+            <div class="stat-details">
+                <span class="detail-item">{{ stats.users.new_today }} nouveaux</span>
+                <span class="detail-item">{{ stats.users.verified }} vérifiés</span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width: {% widthratio stats.users.verified stats.users.total 100 %}%"></div>
+            </div>
+        </div>
+
+        <!-- Carte Véhicules -->
+        <div class="stat-card">
+            <h2><i class="icon-car"></i> Véhicules</h2>
+            <div class="stat-value">{{ stats.vehicles.total|intcomma }}</div>
+            <div class="stat-details">
+                <span class="detail-item">{{ stats.vehicles.available }} disponibles</span>
+                <span class="detail-item">{{ stats.vehicles.with_driver }} avec chauffeur</span>
+            </div>
+            <div class="vehicle-types">
+                {% for type in stats.vehicles.by_type %}
+                <span class="vehicle-type">{{ type.type_vehicule }}: {{ type.count }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Carte Réservations -->
+        <div class="stat-card">
+            <h2><i class="icon-calendar"></i> Réservations</h2>
+            <div class="stat-value">{{ stats.reservations.active|intcomma }}</div>
+            <div class="stat-details">
+                <span class="detail-item">{{ stats.reservations.pending }} en attente</span>
+                <span class="detail-item">{{ stats.reservations.cancelled }} annulées</span>
+            </div>
+            <div class="revenue">
+                CA: {{ stats.reservations.revenue.total|default:0|intcomma }} XOF
+                (Aujourd'hui: {{ stats.reservations.revenue.today|default:0|intcomma }} XOF)
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>Statistiques des 30 derniers jours</h2>
+        <canvas id="statsChart" width="100%" height="400"></canvas>
+    </div>
+
+    <div class="recent-activity">
+        <section class="activity-section">
+            <h2><i class="icon-users"></i> Derniers Utilisateurs</h2>
+            <ul class="activity-list">
+                {% for user in recent.users %}
+                <li>
+                    <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                    <span class="activity-meta">{{ user.date_joined|date:"d/m/Y H:i" }}</span>
+                    <a href="{% url 'admin:location_user_change' user.id %}" class="action-link">Voir</a>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'admin:location_user_changelist' %}" class="btn">Voir tous</a>
+        </section>
+
+        <section class="activity-section">
+            <h2><i class="icon-reservation"></i> Dernières Réservations</h2>
+            <ul class="activity-list">
+                {% for res in recent.reservations %}
+                <li>
+                    <span class="activity-title">{{ res.voiture }} ({{ res.client }})</span>
+                    <span class="activity-meta">{{ res.date_creation|date:"d/m/Y H:i" }} - {{ res.get_statut_display }}</span>
+                    <a href="{% url 'admin:location_reservation_change' res.id %}" class="action-link">Éditer</a>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'admin:location_reservation_changelist' %}" class="btn">Voir toutes</a>
+        </section>
+    </div>
+
+    <!-- Section Actions Rapides -->
+    <div class="quick-actions">
+        <h2><i class="icon-lightning"></i> Actions Rapides</h2>
+        <div class="action-buttons">
+            <a href="{% url 'admin:location_voiture_add' %}" class="btn">Ajouter Véhicule</a>
+            <a href="{% url 'admin:location_reservation_add' %}" class="btn">Créer Réservation</a>
+            <a href="{% url 'admin:location_documentverification_changelist' %}?status__exact=en_attente" class="btn">Vérifications En Attente</a>
+            <a href="{% url 'admin:location_deliveryrequest_changelist' %}?status__exact=PENDING" class="btn">Livraisons en attente</a>
+        </div>
+    </div>
+</div>
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Graphique des statistiques
+    const ctx = document.getElementById('statsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [
+                {
+                    label: 'Nouveaux utilisateurs',
+                    data: {{ new_users_data|safe }},
+                    borderColor: '#417690',
+                    backgroundColor: 'rgba(65, 118, 144, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: 'Réservations',
+                    data: {{ reservations_data|safe }},
+                    borderColor: '#5b80b2',
+                    backgroundColor: 'rgba(91, 128, 178, 0.1)',
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Activité récente'
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

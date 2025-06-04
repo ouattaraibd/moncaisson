@@ -1,0 +1,639 @@
+{% extends "location/base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-orange sidebar collapse">
+            <div class="position-sticky pt-3">
+                <div class="text-center mb-4">
+                    <!-- Section Avatar avec photo de profil -->
+                    <div class="user-avatar mb-3">
+                        <img src="{{ request.user.photo.url|default:'/static/location/images/default-avatar.png' }}" 
+                             alt="Votre avatar"
+                             class="rounded-circle border border-3 border-white shadow"
+                             width="100">
+                    </div>
+                    
+                    <h4 class="mt-2 text-white">{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-white-50">Loueur</p>
+                    
+                    <!-- Badge de confiance -->
+                    <div style="min-width: 250px; margin: 0 auto;">
+                        {% include "location/partials/trust_badge.html" with 
+                            trust_score=user.trust_score|default:50 
+                            trust_metrics=user.trust_metrics|default:{} 
+                        %}
+                    </div>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'loueur_dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'mes_reservations' %}">
+                            <i class="fas fa-calendar-alt me-2"></i> Mes réservations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'liste_favoris' %}">
+                            <i class="fas fa-heart me-2"></i> Favoris
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'modifier_profil' %}">
+                            <i class="fas fa-user-cog me-2"></i> Mon profil
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Tableau de bord</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{% url 'recherche' %}" class="btn btn-sm btn-outline-orange">
+                        <i class="fas fa-search me-1"></i> Trouver une voiture
+                    </a>
+                </div>
+            </div>
+
+            <!-- Welcome Section -->
+            <div class="alert alert-orange mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="alert-heading">Bienvenue, {{ user.first_name|default:user.username }} !</h4>
+                        <p class="mb-0">Retrouvez ici toutes vos réservations et véhicules favoris</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <img src="{% static 'location/images/car-illustration.png' %}" alt="Illustration voiture" width="120">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques Rapides -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-white bg-primary h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-calendar-check fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-title">Réservations actives</h6>
+                                    <p class="card-text display-6">{{ reservations_en_cours|length }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-success h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-wallet fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-title">Total dépensé</h6>
+                                    <p class="card-text display-6">{{ total_depense|default:"0" }} XOF</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-info h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-heart fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-title">Favoris</h6>
+                                    <p class="card-text display-6">{{ favoris.count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Permis de conduire -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-id-card me-2"></i> Mon permis de conduire</h5>
+                </div>
+                <div class="card-body">
+                    {% if profile.license_expired %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Votre permis a expiré le {{ profile.license_expiry|date:"d/m/Y" }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Numéro de permis:</strong> {{ profile.driving_license|default:"Non renseigné" }}</p>
+                            <p><strong>Expiration:</strong> 
+                                {% if profile.license_expiry %}
+                                    {{ profile.license_expiry|date:"d/m/Y" }}
+                                {% else %}
+                                    Non renseignée
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <a href="{% url 'update_license' %}" class="btn btn-orange">
+                                <i class="fas fa-edit me-1"></i> Mettre à jour
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Préférences -->
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i> Mes préférences</h5>
+                    <a href="{% url 'loueur_preferences' %}" class="btn btn-sm btn-outline-orange">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Méthode de paiement préférée:</strong><br>
+                            {{ profile.get_preferred_payment_method_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Types de véhicules préférés:</strong><br>
+                            {{ profile.preferred_vehicle_types|join:", "|default:"Tous" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Mes Réservations -->
+            <div id="mes-reservations" class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i> Mes réservations</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-orange active" data-bs-toggle="tab" href="#en-cours">En cours</button>
+                        <button class="btn btn-sm btn-outline-orange" data-bs-toggle="tab" href="#a-venir">À venir</button>
+                        <button class="btn btn-sm btn-outline-orange" data-bs-toggle="tab" href="#historique">Historique</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Onglet En cours -->
+                        <div class="tab-pane fade show active" id="en-cours">
+                            {% if reservations_en_cours %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Voiture</th>
+                                            <th>Dates</th>
+                                            <th>Montant</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for res in reservations_en_cours %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% with res.voiture.photos.all|first as first_photo %}
+                                                    <img src="{{ first_photo.photo.url }}" width="50" class="rounded me-2">
+                                                    {% endwith %}
+                                                    <div>
+                                                        <strong>{{ res.voiture.marque }} {{ res.voiture.modele }}</strong><br>
+                                                        <small class="text-muted">{{ res.voiture.ville }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {{ res.date_debut|date:"d/m/Y" }}<br>
+                                                <small>au {{ res.date_fin|date:"d/m/Y" }}</small>
+                                            </td>
+                                            <td>{{ res.montant_paye }} XOF</td>
+                                            <td><span class="badge bg-success">{{ res.get_statut_display }}</span></td>
+                                            <td>
+                                                <a href="{% url 'voiture_detail' res.voiture.id %}" class="btn btn-sm btn-outline-orange">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <h5>Aucune réservation en cours</h5>
+                                <p class="text-muted">Vous n'avez pas de réservation active pour le moment</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Onglet À venir -->
+                        <div class="tab-pane fade" id="a-venir">
+                            {% if reservations_futures %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Voiture</th>
+                                            <th>Dates</th>
+                                            <th>Montant</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for res in reservations_futures %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% with res.voiture.photos.all|first as first_photo %}
+                                                    <img src="{{ first_photo.photo.url }}" width="50" class="rounded me-2">
+                                                    {% endwith %}
+                                                    <div>
+                                                        <strong>{{ res.voiture.marque }} {{ res.voiture.modele }}</strong><br>
+                                                        <small class="text-muted">{{ res.voiture.ville }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {{ res.date_debut|date:"d/m/Y" }}<br>
+                                                <small>au {{ res.date_fin|date:"d/m/Y" }}</small>
+                                            </td>
+                                            <td>{{ res.montant_paye }} XOF</td>
+                                            <td><span class="badge bg-warning text-dark">{{ res.get_statut_display }}</span></td>
+                                            <td>
+                                                <a href="{% url 'voiture_detail' res.voiture.id %}" class="btn btn-sm btn-outline-orange me-1">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'annuler_reservation' res.id %}" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+                                <h5>Aucune réservation à venir</h5>
+                                <p class="text-muted">Vous n'avez pas de réservation programmée</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Onglet Historique -->
+                        <div class="tab-pane fade" id="historique">
+                            {% if reservations_passees %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Voiture</th>
+                                            <th>Dates</th>
+                                            <th>Montant</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for res in reservations_passees %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% with res.voiture.photos.all|first as first_photo %}
+                                                    <img src="{{ first_photo.photo.url }}" width="50" class="rounded me-2">
+                                                    {% endwith %}
+                                                    <div>
+                                                        <strong>{{ res.voiture.marque }} {{ res.voiture.modele }}</strong><br>
+                                                        <small class="text-muted">{{ res.voiture.ville }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {{ res.date_debut|date:"d/m/Y" }}<br>
+                                                <small>au {{ res.date_fin|date:"d/m/Y" }}</small>
+                                            </td>
+                                            <td>{{ res.montant_paye }} XOF</td>
+                                            <td>
+                                                <span class="badge bg-{% if res.statut == 'confirme' %}success{% else %}danger{% endif %}">
+                                                    {{ res.get_statut_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'voiture_detail' res.voiture.id %}" class="btn btn-sm btn-outline-orange">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                <h5>Aucune réservation passée</h5>
+                                <p class="text-muted">Votre historique de réservations apparaîtra ici</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Favoris -->
+            <div id="favoris" class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-heart me-2"></i> Mes favoris</h5>
+                    <span class="badge bg-orange">{{ favoris.count }}</span>
+                </div>
+                <div class="card-body">
+                    {% if favoris %}
+                    <div class="row">
+                        {% for fav in favoris %}
+                        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="position-relative">
+                                    <!-- Carrousel de photos -->
+                                    <div id="carousel-{{ fav.voiture.id }}" class="carousel slide" style="height: 160px;">
+                                        <div class="carousel-inner h-100">
+                                            {% for photo in fav.voiture.photos.all %}
+                                            <div class="carousel-item h-100 {% if forloop.first %}active{% endif %}">
+                                                <img src="{{ photo.photo.url }}" 
+                                                     class="d-block w-100 h-100" 
+                                                     style="object-fit: cover;"
+                                                     alt="{{ fav.voiture.marque }} {{ fav.voiture.modele }}">
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% if fav.voiture.photos.count > 1 %}
+                                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ fav.voiture.id }}" data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Previous</span>
+                                        </button>
+                                        <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ fav.voiture.id }}" data-bs-slide="next">
+                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Next</span>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" 
+                                            onclick="location.href='{% url 'retirer_favoris' fav.voiture.id %}'">
+                                        <i class="fas fa-heart-broken"></i>
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ fav.voiture.marque }} {{ fav.voiture.modele }}</h5>
+                                    <p class="card-text">
+                                        <i class="fas fa-map-marker-alt text-orange me-1"></i> {{ fav.voiture.ville }}<br>
+                                        <i class="fas fa-tag text-orange me-1"></i> {{ fav.voiture.prix_jour }} XOF/jour<br>
+                                        <small class="text-muted">{{ fav.voiture.photos.count }} photo(s)</small>
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-white border-0">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'voiture_detail' fav.voiture.id %}" class="btn btn-sm btn-outline-orange">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'reserver_voiture' fav.voiture.id %}" class="btn btn-sm btn-orange">
+                                            <i class="fas fa-calendar-check"></i> Réserver
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-heart-broken fa-3x text-muted mb-3"></i>
+                        <h5>Aucun véhicule favori</h5>
+                        <p class="text-muted">Ajoutez des véhicules à vos favoris pour les retrouver facilement</p>
+                        <a href="{% url 'recherche' %}" class="btn btn-orange">
+                            <i class="fas fa-search me-1"></i> Trouver une voiture
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Section Suggestions -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i> Suggestions pour vous</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for voiture in suggestions %}
+                        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                            <div class="card h-100">
+                                {% with voiture.photos.all|first as first_photo %}
+                                <img src="{{ first_photo.photo.url }}" class="card-img-top" style="height: 160px; object-fit: cover;">
+                                {% endwith %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ voiture.marque }} {{ voiture.modele }}</h5>
+                                    <p class="card-text">
+                                        <i class="fas fa-map-marker-alt text-orange me-1"></i> {{ voiture.ville }}<br>
+                                        <i class="fas fa-tag text-orange me-1"></i> {{ voiture.prix_jour }} XOF/jour
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-white border-0">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'voiture_detail' voiture.id %}" class="btn btn-sm btn-outline-orange">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'reserver_voiture' voiture.id %}" class="btn btn-sm btn-orange">
+                                            <i class="fas fa-calendar-check"></i> Réserver
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<style>
+    .sidebar {
+        min-height: 100vh;
+        background-color: #fd7e14;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+    .bg-orange {
+        background-color: #fd7e14;
+    }
+    .alert-orange {
+        background-color: #fff3e8;
+        border-color: #fd7e14;
+        color: #856404;
+    }
+    .text-orange {
+        color: #fd7e14;
+    }
+    .btn-orange {
+        background-color: #fd7e14;
+        color: white;
+        border: none;
+    }
+    .btn-orange:hover {
+        background-color: #e67312;
+        color: white;
+    }
+    .btn-outline-orange {
+        color: #fd7e14;
+        border-color: #fd7e14;
+    }
+    .btn-outline-orange:hover {
+        background-color: #fd7e14;
+        color: white;
+    }
+    .nav-link.active {
+        font-weight: 600;
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 4px;
+    }
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: none;
+        border-radius: 0.5rem;
+    }
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    #mes-reservations, #favoris {
+        scroll-margin-top: 80px;
+    }
+    .badge.bg-orange {
+        background-color: #fd7e14;
+    }
+    table.table-hover tbody tr:hover {
+        background-color: rgba(253, 126, 20, 0.05);
+    }
+    /* Styles pour le carrousel */
+    .carousel {
+        border-radius: 0.5rem 0.5rem 0 0;
+        overflow: hidden;
+    }
+    .carousel-item {
+        transition: transform 0.6s ease;
+    }
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 5%;
+        background: rgba(0,0,0,0.2);
+    }
+    /* Styles spécifiques pour l'avatar */
+    .user-avatar img {
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .user-avatar img:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    .highlight-section {
+        animation: highlight-fade 2s ease-out;
+    }
+    @keyframes highlight-fade {
+        0% { background-color: rgba(253, 126, 20, 0.2); }
+        100% { background-color: transparent; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du scroll vers les ancres
+    if (window.location.hash) {
+        const target = document.querySelector(window.location.hash);
+        if (target) {
+            setTimeout(() => {
+                target.scrollIntoView({ behavior: 'smooth' });
+                target.classList.add('highlight-section');
+                setTimeout(() => {
+                    target.classList.remove('highlight-section');
+                }, 2000);
+            }, 300);
+        }
+    }
+
+    // Gestion des clics sur les liens d'ancrage
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const target = document.querySelector(targetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+                history.pushState(null, null, targetId);
+                target.classList.add('highlight-section');
+                setTimeout(() => {
+                    target.classList.remove('highlight-section');
+                }, 2000);
+            }
+        });
+    });
+
+    // Initialisation des tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Gestion des onglets
+    var tabElms = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabElms.forEach(function(tabEl) {
+        tabEl.addEventListener('click', function (e) {
+            e.preventDefault();
+            var tab = new bootstrap.Tab(tabEl);
+            tab.show();
+        });
+    });
+
+    // Initialisation des carrousels
+    var carousels = document.querySelectorAll('.carousel');
+    carousels.forEach(function(carousel) {
+        new bootstrap.Carousel(carousel, {
+            interval: 5000,
+            wrap: true
+        });
+    });
+});
+</script>
+{% endblock %}

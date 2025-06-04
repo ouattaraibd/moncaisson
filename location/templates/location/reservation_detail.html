@@ -1,0 +1,188 @@
+{% extends 'location/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-{% if reservation.statut == 'confirme' %}success{% elif reservation.statut == 'annule' %}danger{% else %}warning{% endif %} text-white">
+            <h3 class="mb-0">Détails de la réservation #{{ reservation.id }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Informations de réservation</h4>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item">
+                            <strong>Statut:</strong> 
+                            <span class="badge bg-{% if reservation.statut == 'confirme' %}success{% elif reservation.statut == 'annule' %}danger{% else %}warning{% endif %}">
+                                {{ reservation.get_statut_display }}
+                            </span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Date de création:</strong> {{ reservation.date_creation|date:"d/m/Y H:i" }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Période:</strong> Du {{ reservation.date_debut|date:"d/m/Y" }} au {{ reservation.date_fin|date:"d/m/Y" }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Durée:</strong> {{ reservation.duree }} jour(s)
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Montant total:</strong> {{ reservation.montant_total|floatformat:"0" }} XOF
+                        </li>
+                        {% if reservation.avec_livraison %}
+                        <li class="list-group-item">
+                            <strong>Livraison:</strong> {{ reservation.adresse_livraison }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <h4>Véhicule</h4>
+                    <div class="card mb-3">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="{{ reservation.voiture.photo.url|default:'/static/location/images/default-car.jpg' }}" 
+                                     class="img-fluid rounded-start" alt="{{ reservation.voiture.marque }}">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ reservation.voiture.marque }} {{ reservation.voiture.modele }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            {{ reservation.voiture.annee }} • 
+                                            {{ reservation.voiture.get_type_vehicule_display }} • 
+                                            {{ reservation.voiture.get_transmission_display }}
+                                        </small>
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Prix/jour:</strong> {{ reservation.voiture.prix_jour|floatformat:"0" }} XOF
+                                        {% if reservation.voiture.avec_chauffeur %}
+                                            (+ {{ reservation.voiture.prix_chauffeur|floatformat:"0" }} XOF chauffeur)
+                                        {% endif %}
+                                    </p>
+                                    <a href="{% url 'voiture_detail' reservation.voiture.id %}" class="btn btn-sm btn-outline-primary">
+                                        Voir le véhicule
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h4>Parties</h4>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Propriétaire</h5>
+                            <p class="card-text">
+                                {{ reservation.voiture.proprietaire.get_full_name|default:reservation.voiture.proprietaire.username }}<br>
+                                <small class="text-muted">
+                                    {% if reservation.voiture.proprietaire.is_verified %}
+                                        <i class="fas fa-check-circle text-success"></i> Vérifié
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i> Non vérifié
+                                    {% endif %}
+                                </small>
+                            </p>
+                            
+                            <hr>
+                            
+                            <h5 class="card-title">Loueur</h5>
+                            <p class="card-text">
+                                {{ reservation.client.get_full_name|default:reservation.client.username }}<br>
+                                <small class="text-muted">
+                                    {% if reservation.client.is_verified %}
+                                        <i class="fas fa-check-circle text-success"></i> Vérifié
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i> Non vérifié
+                                    {% endif %}
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <h4>Paiement</h4>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item">
+                            <strong>Montant payé:</strong> {{ reservation.montant_paye|floatformat:"0" }} XOF
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Frais de service:</strong> {{ reservation.frais_service|floatformat:"0" }} XOF
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Commission propriétaire:</strong> {{ reservation.commission_proprietaire }}%
+                        </li>
+                    </ul>
+                    
+                    {% if reservation.statut == 'termine' %}
+                        <div class="mt-3">
+                            {% if user == reservation.client and not reservation.evaluations.exists %}
+                                <a href="{% url 'ajouter_evaluation' reservation.voiture.id %}" class="btn btn-info">
+                                    <i class="fas fa-star"></i> Évaluer la voiture
+                                </a>
+                            {% endif %}
+                            
+                            {% if user == reservation.voiture.proprietaire and not reservation.evaluations_loueur.exists %}
+                                <a href="{% url 'evaluer_loueur' reservation.id %}" class="btn btn-info">
+                                    <i class="fas fa-user-check"></i> Évaluer le loueur
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{% url 'liste_reservations' %}" class="btn btn-orange">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+                
+                {% if reservation.statut == 'confirme' and user == reservation.client %}
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#annulerModal">
+                        <i class="fas fa-times"></i> Annuler la réservation
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'annulation -->
+<div class="modal fade" id="annulerModal" tabindex="-1" aria-labelledby="annulerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="annulerModalLabel">Annuler la réservation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir annuler cette réservation ?</p>
+                <p class="text-danger">Attention : Des frais d'annulation pourraient s'appliquer selon notre politique.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Non, garder
+                </button>
+                <form method="post" action="{% url 'annuler_reservation' reservation.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-check"></i> Oui, annuler
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-orange {
+    background-color: #fd7e14;
+    color: white;
+    border: none;
+}
+.btn-orange:hover {
+    background-color: #e67312;
+    color: white;
+}
+</style>
+{% endblock %}

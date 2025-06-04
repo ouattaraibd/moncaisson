@@ -1,0 +1,15 @@
+{% extends "location/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="alert alert-warning">
+        <h4>Vérification en attente</h4>
+        <p>Votre compte est en cours de vérification. Vous serez notifié une fois la vérification complétée.</p>
+        <p>
+            <a href="{% url 'upload_verification' %}" class="btn btn-primary">
+                Vérifier mon statut
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}

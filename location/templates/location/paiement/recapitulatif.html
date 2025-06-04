@@ -1,0 +1,165 @@
+{% extends "location/base.html" %}
+{% load static humanize %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">
+                    <i class="fas fa-file-invoice-dollar me-2"></i> Récapitulatif de paiement
+                </h3>
+                <span class="badge bg-light text-dark fs-6">Réservation #{{ reservation.id }}</span>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <!-- Colonne Véhicule -->
+                <div class="col-md-6 border-end">
+                    <div class="d-flex mb-4">
+                        <img src="{{ reservation.voiture.photo.url }}" 
+                             class="img-thumbnail me-3" 
+                             style="width: 150px; height: 100px; object-fit: cover"
+                             alt="{{ reservation.voiture.marque }} {{ reservation.voiture.modele }}">
+                        <div>
+                            <h4>{{ reservation.voiture.marque }} {{ reservation.voiture.modele }}</h4>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                {{ reservation.date_debut|date:"d/m/Y" }} - {{ reservation.date_fin|date:"d/m/Y" }}
+                                <span class="badge bg-info ms-2">{{ reservation.duree }} jours</span>
+                            </p>
+                            {% if reservation.voiture.avec_chauffeur %}
+                            <p class="text-muted">
+                                <i class="fas fa-user-tie me-2"></i>
+                                Avec chauffeur
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5><i class="fas fa-info-circle me-2"></i>Informations client</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Nom :</strong> {{ reservation.client.get_full_name }}</li>
+                                <li><strong>Téléphone :</strong> {{ reservation.client.phone }}</li>
+                                <li><strong>Email :</strong> {{ reservation.client.email }}</li>
+                                {% if reservation.voiture.caution_required %}
+                                <li class="text-warning">
+                                    <strong><i class="fas fa-shield-alt me-2"></i>Caution :</strong> 
+                                    {{ reservation.voiture.caution_amount|floatformat:"0"|intcomma }} XOF
+                                    <small class="d-block text-muted">(Remboursable après vérification du véhicule)</small>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonne Paiement -->
+                <div class="col-md-6">
+                    <h5 class="d-flex justify-content-between align-items-center mb-4">
+                        <span><i class="fas fa-receipt me-2"></i>Détails du paiement</span>
+                        <span class="badge bg-{% if reservation.statut == 'confirme' %}success{% else %}warning{% endif %}">
+                            {{ reservation.get_statut_display }}
+                        </span>
+                    </h5>
+
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td>Prix journalier</td>
+                                <td class="text-end">{{ reservation.voiture.prix_jour|floatformat:"0"|intcomma }} XOF</td>
+                            </tr>
+                            <tr>
+                                <td>Durée ({{ reservation.duree }} jours)</td>
+                                <td class="text-end">{{ montant_base|floatformat:"0"|intcomma }} XOF</td>
+                            </tr>
+                            {% if reservation.voiture.avec_chauffeur %}
+                            <tr>
+                                <td>Service chauffeur</td>
+                                <td class="text-end">{{ reservation.voiture.prix_chauffeur|floatformat:"0"|intcomma }} XOF/jour</td>
+                            </tr>
+                            {% endif %}
+                            <tr class="table-secondary">
+                                <td><strong>Sous-total</strong></td>
+                                <td class="text-end"><strong>{{ montant_base|floatformat:"0"|intcomma }} XOF</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Frais de service (10%)</td>
+                                <td class="text-end">{{ frais_service|floatformat:"0"|intcomma }} XOF</td>
+                            </tr>
+                            {% if reservation.voiture.caution_required %}
+                            <tr>
+                                <td>
+                                    <span class="d-flex align-items-center">
+                                        <i class="fas fa-shield-alt me-2 text-warning"></i>
+                                        Caution
+                                    </span>
+                                </td>
+                                <td class="text-end">{{ reservation.caution_paid|floatformat:"0"|intcomma }} XOF</td>
+                            </tr>
+                            {% endif %}
+                            <tr class="table-primary">
+                                <th>TOTAL À PAYER</th>
+                                <th class="text-end">{{ reservation.montant_total|floatformat:"0"|intcomma }} XOF</th>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="alert alert-info mt-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-3 fs-4"></i>
+                            <div>
+                                <strong>Information importante :</strong>
+                                {% if reservation.voiture.caution_required %}
+                                <p class="mb-0">
+                                    La caution de {{ reservation.caution_paid|floatformat:"0"|intcomma }} XOF sera bloquée 
+                                    et remboursée après vérification du véhicule à la fin de la location.
+                                </p>
+                                {% else %}
+                                <p class="mb-0">Aucune caution n'est requise pour cette réservation.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-3 mt-4">
+                        <a href="{% url 'process_paiement' reservation.id %}" 
+                           class="btn btn-success btn-lg py-3">
+                           <i class="fas fa-credit-card me-2"></i> Payer maintenant
+                        </a>
+                        <a href="{% url 'voiture_detail' reservation.voiture.id %}" 
+                           class="btn btn-outline-secondary">
+                           <i class="fas fa-arrow-left me-2"></i> Retour au véhicule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .table {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .table th {
+        font-weight: 600;
+    }
+    .table tr td:first-child {
+        font-weight: 500;
+    }
+    .alert-info {
+        border-left: 4px solid #0dcaf0;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "policies/base_policies.html" %}
+
+{% block title %}Acceptation des Conditions | MonCaisson{% endblock %}
+
+{% block policy_content %}
+<div class="policy-content">
+    <h1>Document d'Acceptation</h1>
+    
+    <div class="highlight">
+        <p class="important">Ce document vaut acceptation contractuelle des conditions générales.</p>
+    </div>
+
+    <section>
+        <h2>1. Objet</h2>
+        <p>En cochant "J'accepte", vous reconnaissez avoir pris connaissance et approuvé :</p>
+        <ul>
+            <li>Les Conditions Générales d'Utilisation</li>
+            <li>La Politique de Confidentialité</li>
+            <li>Soit les Conditions pour Loueurs, soit pour Propriétaires</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>2. Consentement Éclairé</h2>
+        <ul>
+            <li>Acceptation des modalités financières</li>
+            <li>Reconnaissance de vos obligations légales</li>
+            <li>Compréhension des mécanismes de caution</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>3. Conséquences Juridiques</h2>
+        <div class="highlight">
+            <p><strong>Cet engagement :</strong></p>
+            <ul>
+                <li>Vaut pour toutes vos locations futures</li>
+                <li>Est opposable en justice</li>
+                <li>Peut entraîner suspension du compte en cas de non-respect</li>
+            </ul>
+        </div>
+    </section>
+
+    <section>
+        <h2>4. Droit de Rétractation</h2>
+        <p>Vous pouvez :</p>
+        <ul>
+            <li>Supprimer votre compte à tout moment</li>
+            <li>Exporter vos données personnelles</li>
+            <li>Nous contacter pour toute clarification</li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>Document généré le : {% now "d/m/Y" %}</p>
+        <p>IP d'acceptation : {{ request.META.REMOTE_ADDR }}</p>
+    </footer>
+</div>
+{% endblock %}

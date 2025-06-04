@@ -1,0 +1,14 @@
+.policy-container {
+    line-height: 1.8;
+    counter-reset: section;
+}
+.policy-container h2::before {
+    counter-increment: section;
+    content: counter(section) ". ";
+    color: #fd7e14;
+}
+.policy-header {
+    background: linear-gradient(90deg, #f8f9fa 0%, #fff 100%);
+    padding: 2rem;
+    border-radius: 10px;
+}

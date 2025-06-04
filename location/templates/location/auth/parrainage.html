@@ -1,0 +1,32 @@
+{% extends 'location/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Programme de Parrainage</h2>
+    <div class="card shadow">
+        <div class="card-body">
+            <h5 class="card-title">Votre lien de parrainage</h5>
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" 
+                       value="{{ request.build_absolute_uri }}?ref={{ request.user.username }}" 
+                       id="parrainLink" readonly>
+                <button class="btn btn-primary" onclick="copyParrainLink()">
+                    <i class="fas fa-copy"></i> Copier
+                </button>
+            </div>
+            <p class="text-muted">
+                Partagez ce lien et gagnez 2% du montant de chaque réservation faite par vos filleuls
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyParrainLink() {
+    const link = document.getElementById("parrainLink");
+    link.select();
+    document.execCommand("copy");
+    alert("Lien copié !");
+}
+</script>
+{% endblock %}

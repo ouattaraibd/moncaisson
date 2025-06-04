@@ -1,0 +1,41 @@
+{% extends "location/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3>Validation de transaction</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Type:</strong> {{ transaction.get_type_transaction_display }}</p>
+                    <p><strong>Montant:</strong> {{ transaction.montant }} XOF</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Date:</strong> {{ transaction.date|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Référence:</strong> {{ transaction.reference }}</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                
+                <div class="form-group mt-4">
+                    <button type="submit" name="action" value="valider" class="btn btn-success me-2">
+                        <i class="fas fa-check-circle"></i> Valider
+                    </button>
+                    <button type="submit" name="action" value="rejeter" class="btn btn-danger">
+                        <i class="fas fa-times-circle"></i> Rejeter
+                    </button>
+                    <a href="{% url 'historique_transactions' %}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-arrow-left"></i> Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "location/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="alert alert-danger text-center">
+        <h2>Compte temporairement bloqué</h2>
+        <p>
+            Trop de tentatives de connexion infructueuses. 
+            Veuillez réessayer dans 15 minutes ou 
+            <a href="{% url 'password_reset' %}">réinitialiser votre mot de passe</a>.
+        </p>
+        <p>
+            <small>Code d'erreur: AXES_LOCKOUT</small>
+        </p>
+    </div>
+</div>
+{% endblock %}

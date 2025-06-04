@@ -1,0 +1,196 @@
+{% extends 'location/base.html' %}
+{% load static humanize %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-calendar-alt me-2"></i>
+            Liste des Réservations
+        </h2>
+        <a href="{% url 'proprietaire_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Retour au tableau de bord
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Voiture</th>
+                            <th>Client</th>
+                            <th>Période</th>
+                            <th class="text-end">Montant</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in reservations %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'voiture_detail' pk=reservation.voiture.id %}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        {% if reservation.voiture.photo %}
+                                        <img src="{{ reservation.voiture.photo.url }}" 
+                                             alt="{{ reservation.voiture.marque }}" 
+                                             class="rounded me-3" 
+                                             width="60" height="40" style="object-fit: cover">
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ reservation.voiture.marque }} {{ reservation.voiture.modele }}</strong><br>
+                                            <small class="text-muted">{{ reservation.voiture.ville }}</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </td>
+                            <td>
+                                {{ reservation.client.get_full_name|default:reservation.client.username }}<br>
+                                <small class="text-muted">{{ reservation.client.phone }}</small>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span>{{ reservation.date_debut|date:"d/m/Y" }}</span>
+                                    <span class="text-muted small">au</span>
+                                    <span>{{ reservation.date_fin|date:"d/m/Y" }}</span>
+                                    <span class="badge bg-info text-dark mt-1">
+                                        {{ reservation.duree }} jour{{ reservation.duree|pluralize }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold">
+                                {{ reservation.montant_paye|intcomma }} XOF
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if reservation.statut == 'confirme' %}bg-success
+                                    {% elif reservation.statut == 'annule' %}bg-danger
+                                    {% elif reservation.statut == 'termine' %}bg-secondary
+                                    {% else %}bg-warning text-dark{% endif %}">
+                                    {{ reservation.get_statut_display }}
+                                </span>
+                                {% if reservation.est_en_cours %}
+                                <span class="badge bg-primary mt-1">En cours</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
+                                            type="button" 
+                                            data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" 
+                                               href="{% url 'generer_facture' reservation.id %}">
+                                                <i class="fas fa-file-invoice me-2"></i>Facture
+                                            </a>
+                                        </li>
+                                        {% if reservation.statut == 'attente' %}
+                                        <li>
+                                            <a class="dropdown-item text-success" 
+                                               href="{% url 'confirmer_reservation' reservation.id %}">
+                                                <i class="fas fa-check-circle me-2"></i>Confirmer
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" 
+                                               href="{% url 'annuler_reservation' reservation.id %}">
+                                                <i class="fas fa-times-circle me-2"></i>Refuser
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                    <h5>Aucune réservation trouvée</h5>
+                                    <p>Vous n'avez pas encore de réservations pour vos véhicules</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <nav aria-label="Pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">&laquo; Première</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Dernière &raquo;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'location/css/dataTables.bootstrap5.min.css' %}" rel="stylesheet">
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    .badge {
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+    .dropdown-menu {
+        min-width: 200px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'location/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'location/js/dataTables.bootstrap5.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    $('.table').DataTable({
+        responsive: true,
+        language: {
+            url: "{% static 'location/js/French.json' %}"
+        },
+        dom: '<"top"f>rt<"bottom"lip><"clear">',
+        pageLength: 10
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,401 @@
+{% load static %}
+
+<div id="chatbot-container" class="chatbot-wrapper">
+  <!-- Bouton de lancement flottant -->
+  <button id="chatbot-toggle" class="chatbot-toggle-btn">
+    <img src="{% static 'location/images/chatbot-icon.png' %}" alt="Chatbot" width="24">
+  </button>
+
+  <!-- Widget principal -->
+  <div id="chatbot-widget" class="chatbot-widget">
+    <div class="chatbot-header">
+      <div class="chatbot-title">
+        <img src="{% static 'location/images/chatbot-avatar.png' %}" 
+             alt="Assistant Virtuel" 
+             class="chatbot-avatar">
+        <div>
+          <h5>Assistant Location Voiture</h5>
+          <small class="chatbot-status" id="chat-status">✓ En ligne</small>
+        </div>
+      </div>
+      <div class="chatbot-actions">
+        <button id="chatbot-minimize" class="chatbot-action-btn" aria-label="Minimiser">
+          <i class="fas fa-minus"></i>
+        </button>
+        <button id="chatbot-close" class="chatbot-action-btn" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="chat-messages" class="chatbot-messages">
+      <!-- Message d'accueil -->
+      <div class="message bot">
+        <div class="message-header">
+          <span class="sender-name">Assistant</span>
+          <span class="message-time">{% now "H:i" %}</span>
+        </div>
+        <div class="message-content">
+          Bonjour ! Je suis votre assistant pour la location de voitures. Comment puis-je vous aider ?
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestions rapides -->
+    <div id="suggestions-container" class="chatbot-suggestions">
+      <button class="suggestion-btn">Quelles voitures sont disponibles ?</button>
+      <button class="suggestion-btn">Comment faire une réservation ?</button>
+      <button class="suggestion-btn">Quels sont vos tarifs ?</button>
+    </div>
+
+    <form id="chat-form" class="chatbot-form">
+      <div class="input-group">
+        <input type="text" 
+               id="chat-input" 
+               class="form-control" 
+               placeholder="Écrivez votre message..."
+               aria-label="Votre message"
+               autocomplete="off">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+      <small class="typing-indicator" id="typing-indicator"></small>
+    </form>
+  </div>
+</div>
+
+<style>
+/* Style de base */
+.chatbot-wrapper {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Bouton de lancement */
+.chatbot-toggle-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #007bff;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatbot-toggle-btn:hover {
+  transform: scale(1.1);
+  background: #0069d9;
+}
+
+/* Widget principal */
+.chatbot-widget {
+  width: 350px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+  max-height: 600px;
+}
+
+.chatbot-header {
+  padding: 15px;
+  background: #007bff;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chatbot-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chatbot-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.chatbot-title h5 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.chatbot-status {
+  opacity: 0.8;
+  font-size: 0.75rem;
+  display: block;
+}
+
+.chatbot-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chatbot-action-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  padding: 5px;
+}
+
+.chatbot-action-btn:hover {
+  opacity: 1;
+}
+
+/* Zone de messages */
+.chatbot-messages {
+  padding: 15px;
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: 400px;
+  background: #f8f9fa;
+}
+
+.message {
+  margin-bottom: 12px;
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  line-height: 1.4;
+  font-size: 0.95rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.message.user {
+  margin-left: auto;
+  background: #007bff;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message.bot {
+  margin-right: auto;
+  background: #e9ecef;
+  color: #212529;
+  border-bottom-left-radius: 4px;
+}
+
+/* Suggestions */
+.chatbot-suggestions {
+  padding: 10px 15px;
+  background: #f1f3f5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid #dee2e6;
+}
+
+.suggestion-btn {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.suggestion-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+/* Formulaire */
+.chatbot-form {
+  padding: 15px;
+  border-top: 1px solid #dee2e6;
+  background: white;
+}
+
+.typing-indicator {
+  display: block;
+  height: 18px;
+  color: #6c757d;
+  font-size: 0.8rem;
+  padding-top: 5px;
+}
+
+/* États */
+.chatbot-widget.active {
+  display: flex;
+}
+
+.chatbot-widget.minimized {
+  height: 60px;
+  overflow: hidden;
+}
+
+.status-connected { color: #a3e9a8; }
+.status-disconnected { color: #ffabab; }
+.status-error { color: #ffd8a3; }
+</style>
+
+<script>
+class ChatBot {
+  constructor() {
+    this.socket = null;
+    this.setupWebSocket();
+    this.setupEventListeners();
+  }
+
+  setupWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    this.socket = new WebSocket(`${protocol}${window.location.host}/ws/chatbot/`);
+
+    this.socket.onopen = () => {
+      console.log('Connexion WebSocket établie');
+      document.getElementById('chat-status').textContent = '✓ En ligne';
+      document.getElementById('chat-status').className = 'status-connected';
+    };
+
+    this.socket.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      this.appendMessage(data.message, 'bot');
+      
+      if (data.buttons && data.buttons.length > 0) {
+        this.showSuggestions(data.buttons);
+      }
+    };
+
+    this.socket.onclose = () => {
+      console.log('Connexion WebSocket fermée');
+      document.getElementById('chat-status').textContent = '✗ Déconnecté';
+      document.getElementById('chat-status').className = 'status-disconnected';
+      setTimeout(() => this.setupWebSocket(), 5000); // Reconnexion après 5s
+    };
+
+    this.socket.onerror = (error) => {
+      console.error('Erreur WebSocket:', error);
+      document.getElementById('chat-status').textContent = '⚠ Erreur';
+      document.getElementById('chat-status').className = 'status-error';
+    };
+  }
+
+  setupEventListeners() {
+    // Gestion du formulaire
+    document.getElementById('chat-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+      
+      if (message) {
+        this.sendMessage(message);
+        input.value = '';
+      }
+    });
+
+    // Gestion des suggestions
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('suggestion-btn')) {
+        this.sendMessage(e.target.textContent);
+      }
+    });
+
+    // Gestion de l'interface
+    document.getElementById('chatbot-toggle').addEventListener('click', () => {
+      const widget = document.getElementById('chatbot-widget');
+      widget.classList.toggle('active');
+      
+      if (widget.classList.contains('active')) {
+        document.getElementById('chat-input').focus();
+      }
+    });
+
+    document.getElementById('chatbot-minimize').addEventListener('click', () => {
+      const widget = document.getElementById('chatbot-widget');
+      widget.classList.toggle('minimized');
+    });
+
+    document.getElementById('chatbot-close').addEventListener('click', () => {
+      document.getElementById('chatbot-widget').classList.remove('active');
+    });
+  }
+
+  sendMessage(message) {
+    if (this.socket.readyState === WebSocket.OPEN) {
+      this.appendMessage(message, 'user');
+      this.socket.send(JSON.stringify({ message }));
+    } else {
+      this.appendMessage("Connexion perdue, tentative de reconnexion...", 'system');
+      this.setupWebSocket();
+    }
+  }
+
+  appendMessage(content, sender) {
+    const chatContainer = document.getElementById('chat-messages');
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${sender}`;
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+    if (sender === 'bot') {
+      messageElement.innerHTML = `
+        <div class="message-header">
+          <span class="sender-name">Assistant</span>
+          <span class="message-time">${timeString}</span>
+        </div>
+        <div class="message-content">${content}</div>
+      `;
+    } else {
+      messageElement.innerHTML = `
+        <div class="message-header">
+          <span class="sender-name">Vous</span>
+          <span class="message-time">${timeString}</span>
+        </div>
+        <div class="message-content">${content}</div>
+      `;
+    }
+
+    chatContainer.appendChild(messageElement);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  showSuggestions(suggestions) {
+    const container = document.getElementById('suggestions-container');
+    container.innerHTML = suggestions.map(text => 
+      `<button class="suggestion-btn">${text}</button>`
+    ).join('');
+  }
+}
+
+// Initialisation du chatbot quand le DOM est chargé
+document.addEventListener('DOMContentLoaded', () => {
+  new ChatBot();
+});
+</script>

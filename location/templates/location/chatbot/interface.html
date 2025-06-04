@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="chatbot-container">
+    <div class="chatbot-header">
+        <div class="chatbot-title">
+            <h2>{{ page_title }}</h2>
+            <div class="connection-status" id="connection-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Connexion...</span>
+            </div>
+        </div>
+        <div class="user-info">
+            <span class="username">{{ user.username }}</span>
+            <span class="user-avatar">{{ user.username|first|upper }}</span>
+        </div>
+    </div>
+    
+    <div class="chat-content">
+        <div id="chat-messages" class="chat-messages">
+            {% for msg in chat_history %}
+                <div class="message {% if msg.is_from_user %}user-message{% else %}bot-message{% endif %}">
+                    <div class="message-content">{{ msg.content }}</div>
+                    <div class="message-time">{{ msg.timestamp|time:"H:i" }}</div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="chat-controls">
+            <form id="chat-form" class="chat-form">
+                {% csrf_token %}
+                <input type="text" 
+                       id="chat-input" 
+                       placeholder="Tapez votre message..." 
+                       autocomplete="off"
+                       aria-label="Message input">
+                <button type="submit" id="chat-send" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+            <div id="suggestions-container" class="suggestions-container"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'location/css/chatbot.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const CHAT_CONFIG = {
+        websocketUrl: "{{ websocket_url }}",
+        userId: "{{ user.id }}",
+        csrfToken: "{{ csrf_token }}"
+    };
+</script>
+<script src="{% static 'location/js/chatbot.js' %}" defer></script>
+{% endblock %}

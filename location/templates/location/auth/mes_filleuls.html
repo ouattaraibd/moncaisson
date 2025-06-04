@@ -1,0 +1,33 @@
+{% extends 'location/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Mes Filleuls</h2>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Date d'inscription</th>
+                    <th>Réservations</th>
+                    <th>Gains</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for filleul in filleuls %}
+                <tr>
+                    <td>{{ filleul.get_full_name }}</td>
+                    <td>{{ filleul.date_joined|date:"d/m/Y" }}</td>
+                    <td>{{ filleul.reservations_client.count }}</td>
+                    <td>{{ filleul.credit }} XOF</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">Aucun filleul pour le moment</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

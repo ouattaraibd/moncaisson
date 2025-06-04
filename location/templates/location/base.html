@@ -1,0 +1,398 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <!-- Optimisations Mobile-First pour la Côte d'Ivoire -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, viewport-fit=cover">
+    <meta name="theme-color" content="#fd7e14">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <title>MONCAISSON - Location de voitures en Côte d'Ivoire</title>
+    <!-- Trust & Verification -->
+    <meta name="trustpilot-verification" content="votrecode">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Progressive Web App -->
+    <link rel="manifest" href="{% static 'location/manifest.json' %}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Font Awesome (version 6) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Votre CSS personnalisé -->
+    <link rel="stylesheet" href="{% static 'location/css/styles.css' %}?v=3.0">
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'location/images/favicon.ico' %}">
+    <style>
+        /* Styles supplémentaires pour la nouvelle mise en page */
+        .sidebar {
+            min-height: 100vh;
+            background: #fd7e14;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .user-profile-horizontal {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 15px;
+        }
+        
+        .user-profile-horizontal img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border: 2px solid white;
+            margin-right: 15px;
+        }
+        
+        .user-profile-info h6 {
+            margin-bottom: 0;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .user-profile-info small {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+        }
+        
+        .nav-link {
+            padding: 10px 15px;
+            margin: 2px 0;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            font-weight: 600;
+        }
+        
+        /* Styles pour les badges de confiance */
+        .trust-badges {
+            border-top: 1px solid #eee;
+        }
+        .trust-badges img {
+            transition: transform 0.3s;
+        }
+        .trust-badges img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Optimisations tactiles pour mobile */
+        .btn, .nav-link, .dropdown-item {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% if user.is_authenticated %}
+            <!-- Sidebar redessinée avec photo sur le côté -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <!-- Section Profil Horizontale -->
+                    <div class="user-profile-horizontal">
+                        {% if user.proprietaire_profile.photo or user.loueur_profile.photo %}
+                            <img src="{% if user.user_type == 'PROPRIETAIRE' %}{{ user.proprietaire_profile.photo.url }}{% else %}{{ user.loueur_profile.photo.url }}{% endif %}" 
+                                 alt="Photo profil" class="rounded-circle">
+                        {% else %}
+                            <img src="{% static 'location/images/default-avatar.png' %}" 
+                                 alt="Photo profil" class="rounded-circle">
+                        {% endif %}
+                        <div class="user-profile-info">
+                            <h6>{{ user.get_full_name|default:user.username|default:"Utilisateur"|truncatechars:15 }}</h6>
+                            <small>
+                                {% if user.user_type == 'PROPRIETAIRE' %}
+                                    Propriétaire
+                                {% else %}
+                                    Loueur
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Menu Navigation -->
+                    <ul class="nav flex-column">
+                        {% if user.user_type == 'PROPRIETAIRE' %}
+                        <!-- Menu pour propriétaire -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'proprietaire_dashboard' %}active{% endif %} text-white" 
+                               href="{% url 'proprietaire_dashboard' %}">
+                                <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'ajouter_voiture' %}active{% endif %} text-white" 
+                               href="{% url 'ajouter_voiture' %}">
+                                <i class="fas fa-car me-2"></i> Ajouter une voiture
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'liste_reservations' %}active{% endif %} text-white" 
+                               href="{% url 'liste_reservations' %}">
+                                <i class="fas fa-calendar-alt me-2"></i> Réservations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'statistiques' %}active{% endif %} text-white" 
+                               href="{% url 'statistiques' %}">
+                                <i class="fas fa-chart-line me-2"></i> Statistiques
+                            </a>
+                        </li>
+                        {% else %}
+                        <!-- Menu pour loueur -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'loueur_dashboard' %}active{% endif %} text-white" 
+                               href="{% url 'loueur_dashboard' %}">
+                                <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'recherche' %}active{% endif %} text-white" 
+                               href="{% url 'recherche' %}">
+                                <i class="fas fa-search me-2"></i> Trouver une voiture
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'reservation' in request.resolver_match.url_name %}active{% endif %} text-white" 
+                               href="#mes-reservations">
+                                <i class="fas fa-calendar-check me-2"></i> Mes réservations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'favoris' in request.resolver_match.url_name %}active{% endif %} text-white" 
+                               href="#favoris">
+                                <i class="fas fa-heart me-2"></i> Favoris
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Menu commun -->
+                        <li class="nav-item mt-2">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'modifier_profil' %}active{% endif %} text-white" 
+                               href="{% url 'modifier_profil' %}">
+                                <i class="fas fa-user-cog me-2"></i> Mon profil
+                            </a>
+                        </li>
+                        
+                        <!-- Menu Parrainage -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'parrainage' %}active{% endif %} text-white" 
+                               href="{% url 'parrainage' %}">
+                                <i class="fas fa-users me-2"></i> Parrainage
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'mes_filleuls' %}active{% endif %} text-white" 
+                               href="{% url 'mes_filleuls' %}">
+                                <i class="fas fa-user-friends me-2"></i> Mes filleuls
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Main content -->
+            <main class="col-md-{% if user.is_authenticated %}9{% else %}12{% endif %} 
+                          ms-sm-auto 
+                          col-lg-{% if user.is_authenticated %}10{% else %}12{% endif %} 
+                          px-md-4 py-4">
+                <!-- Barre de navigation supérieure -->
+                <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+                    <div class="container-fluid">
+                        {% if user.is_authenticated %}
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTop">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        {% endif %}
+                        <a class="navbar-brand" href="{% url 'accueil' %}">
+                            <span class="fw-bold fs-4">MONCAISSON</span>
+                        </a>
+                        
+                        <div class="collapse navbar-collapse" id="navbarTop">
+                            <ul class="navbar-nav me-auto">
+                                <li class="nav-item">
+                                    <form class="d-flex" method="get" action="{% url 'recherche' %}">
+                                        <div class="input-group">
+                                            <input class="form-control" type="text" name="ville" placeholder="Ville" value="{{ request.GET.ville|default:'' }}">
+                                            <button class="btn btn-orange" type="submit">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </li>
+                            </ul>
+                            
+                            <div class="user-section ms-3">
+                                {% if user.is_authenticated %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                            <i class="fas fa-user me-1"></i> {{ user.username }}
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="{% url 'modifier_profil' %}">Mon profil</a></li>
+                                            <li><a class="dropdown-item" href="{% url 'parrainage' %}">Parrainage</a></li>
+                                            <li><a class="dropdown-item" href="{% url 'mes_filleuls' %}">Mes filleuls</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <form action="{% url 'deconnexion' %}" method="post" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'connexion' %}" class="btn btn-outline-primary me-2">
+                                        <i class="fas fa-sign-in-alt me-1"></i> Connexion
+                                    </a>
+                                    <a href="{% url 'register_choice' %}" class="btn btn-primary">
+                                        <i class="fas fa-user-plus me-1"></i> Inscription
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Messages système -->
+                {% if messages %}
+                <div class="container mt-2">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="opacity: 1 !important;">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Contenu principal -->
+                {% block content %}{% endblock %}
+
+                <!-- Badges de confiance -->
+                <div class="trust-badges container-fluid py-3 bg-light mt-4 text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-auto border-end pe-3">
+                            <span class="badge bg-success">Paiement sécurisé</span>
+                        </div>
+                        <div class="col-auto border-end px-3">
+                            <span class="badge bg-warning text-dark">Primé 2023</span>
+                        </div>
+                        <div class="col-auto ps-3">
+                            <span class="badge bg-info">Éco-responsable</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('{% static "location/js/service-worker.js" %}')
+                .then(registration => {
+                    console.log('ServiceWorker enregistré avec succès:', registration.scope);
+                })
+                .catch(error => {
+                    console.log("Échec de l'enregistrement du ServiceWorker:", error);
+                });
+        });
+    }
+    </script>
+    
+    <!-- Scripts personnalisés -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion améliorée de la déconnexion
+        const logoutForms = document.querySelectorAll('form[action*="deconnexion"]');
+        logoutForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: new FormData(this)
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.href = "{% url 'accueil' %}";
+                    }
+                }).catch(error => {
+                    console.error('Erreur lors de la déconnexion:', error);
+                    window.location.reload();
+                });
+            });
+        });
+        
+        // Gestion du cache
+        if (performance.navigation.type === 1) {
+            window.location.href = window.location.href;
+        }
+
+        // Activation des tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Animation des badges de confiance
+        const trustBadges = document.querySelectorAll('.trust-badges img');
+        trustBadges.forEach(badge => {
+            badge.addEventListener('mouseenter', () => {
+                badge.style.transform = 'scale(1.1)';
+            });
+            badge.addEventListener('mouseleave', () => {
+                badge.style.transform = 'scale(1)';
+            });
+        });
+
+        // Détection du réseau pour les marchés mobiles
+        function updateNetworkStatus() {
+            const status = navigator.onLine ? 'online' : 'offline';
+            console.log('Statut réseau:', status);
+            
+            if (status === 'offline') {
+                // Afficher un message d'avertissement
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-warning fixed-top text-center mb-0';
+                alert.innerHTML = 'Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.';
+                document.body.prepend(alert);
+            }
+        }
+
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+        updateNetworkStatus();
+    });
+    </script>
+
+    <!-- Inclusion du widget chatbot -->
+    {% include 'location/chatbot/widget.html' %}
+</body>
+</html>

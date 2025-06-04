@@ -1,0 +1,50 @@
+{% extends "location/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>Litige #{{ dispute.id }}</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Informations</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Réservation :</strong> {{ dispute.reservation }}</p>
+            <p><strong>Créé par :</strong> {{ dispute.created_by }}</p>
+            <p><strong>Date création :</strong> {{ dispute.created_at }}</p>
+            <p><strong>Statut :</strong> {{ dispute.get_statut_display }}</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Motif</h4>
+        </div>
+        <div class="card-body">
+            {{ dispute.motif|linebreaks }}
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label class="form-label">Nouveau statut</label>
+            <select name="statut" class="form-select">
+                {% for value, label in dispute.STATUT_CHOICES %}
+                <option value="{{ value }}" {% if dispute.statut == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Résolution</label>
+            <textarea name="resolution" class="form-control" rows="4">{{ dispute.resolution }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'location/base.html' %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="fas fa-calendar-alt me-2"></i>Mes réservations</h2>
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if reservations %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Véhicule</th>
+                            <th>Dates</th>
+                            <th class="text-end">Montant</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in reservations %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'voiture_detail' res.voiture.id %}" class="text-decoration-none">
+                                    {{ res.voiture.marque }} {{ res.voiture.modele }}
+                                </a>
+                            </td>
+                            <td>
+                                {{ res.date_debut|date:"d/m/Y" }} - {{ res.date_fin|date:"d/m/Y" }}
+                                <br>
+                                <small class="text-muted">{{ res.duree }} jour{{ res.duree|pluralize }}</small>
+                            </td>
+                            <td class="text-end">{{ res.montant_total|intcomma }} XOF</td>
+                            <td>
+                                <span class="badge bg-{% if res.statut == 'confirme' %}success
+                                {% elif res.statut == 'annule' %}danger
+                                {% elif res.statut == 'termine' %}secondary
+                                {% else %}warning text-dark{% endif %}">
+                                    {{ statuts|get_item:res.statut }}
+                                </span>
+                                {% if res.dernier_paiement %}
+                                <br>
+                                <small class="text-muted">
+                                    {{ res.dernier_paiement.get_methode_display }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
+                                            type="button" 
+                                            data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" 
+                                               href="{% url 'reservation_detail' res.id %}">
+                                                <i class="fas fa-eye me-2"></i>Détails
+                                            </a>
+                                        </li>
+                                        {% if res.statut == 'confirme' %}
+                                        <li>
+                                            <a class="dropdown-item" 
+                                               href="{% url 'generer_facture' res.id %}">
+                                                <i class="fas fa-file-invoice me-2"></i>Facture
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                <h5>Aucune réservation trouvée</h5>
+                <p class="text-muted">Vous n'avez pas encore effectué de réservation</p>
+                <a href="{% url 'recherche' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-search me-2"></i>Trouver un véhicule
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

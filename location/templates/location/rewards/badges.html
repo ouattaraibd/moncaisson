@@ -1,0 +1,198 @@
+{% extends "location/base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Colonne gauche - Badges de l'utilisateur -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-orange text-white">
+                    <h4><i class="fas fa-trophy me-2"></i>Votre Progression</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h5 class="text-muted">Niveau Actuel: <span class="fw-bold" style="color: {{ user.loyalty_profile.level.color }}">{{ user.loyalty_profile.get_level_display }}</span></h5>
+                        <div class="progress mb-2" style="height: 20px;">
+                            <div class="progress-bar progress-bar-striped" 
+                                 style="width: {{ next_badge.progress }}%; background-color: {{ next_badge.color }}">
+                                {{ user.loyalty_profile.points }} pts
+                            </div>
+                        </div>
+                        {% if next_badge %}
+                        <small>Prochain badge: <strong>{{ next_badge.name }}</strong> ({{ next_badge.points_needed }} pts restants)</small>
+                        {% else %}
+                        <small>Vous avez atteint le niveau maximum!</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 mb-3">
+                        <a href="{% url 'rewards_list' %}" class="btn btn-outline-orange">
+                            <i class="fas fa-gift me-1"></i> Voir les récompenses disponibles
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-orange text-white">
+                    <h4><i class="fas fa-shield-alt me-2"></i>Vos Badges</h4>
+                </div>
+                <div class="card-body">
+                    {% if current_badges %}
+                    <div class="row row-cols-2 g-3">
+                        {% for badge in current_badges %}
+                        <div class="col">
+                            <div class="badge-card earned text-center p-3" 
+                                 style="border-left: 4px solid {{ badge.color }}; background-color: {{ badge.color }}20;">
+                                <i class="fas {{ badge.icon }} fa-2x mb-2" style="color: {{ badge.color }}"></i>
+                                <h6 class="mb-1">{{ badge.name }}</h6>
+                                {% if badge.type == 'standard' %}
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar" style="width: {{ badge.progress }}%; background-color: {{ badge.color }}"></div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Vous n'avez pas encore de badges</p>
+                        <small>Effectuez des activités pour en gagner!</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne droite - Tous les badges -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-orange text-white d-flex justify-content-between align-items-center">
+                    <h4><i class="fas fa-medal me-2"></i>Tous les Badges</h4>
+                    <span class="badge bg-white text-orange">{{ user.loyalty_profile.badges|length }}/{{ all_badges|length }} obtenus</span>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-4" id="badgeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="standard-tab" data-bs-toggle="tab" data-bs-target="#standard" type="button" role="tab">
+                                Standards
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="special-tab" data-bs-toggle="tab" data-bs-target="#special" type="button" role="tab">
+                                Spéciaux
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="badgeTabContent">
+                        <!-- Onglet Badges Standards -->
+                        <div class="tab-pane fade show active" id="standard" role="tabpanel">
+                            <div class="row">
+                                {% for badge in all_badges|dictsort:"min_points" %}
+                                {% if badge.type == 'standard' %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="badge-card h-100 {% if badge.earned %}earned{% else %}locked{% endif %}">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas {{ badge.icon }} fa-2x me-3" style="color: {% if badge.earned %}{{ badge.color }}{% else %}#ddd{% endif %}"></i>
+                                            <div>
+                                                <h5 class="mb-0">{{ badge.name }}</h5>
+                                                <small class="text-muted">≥ {{ badge.min_points }} points</small>
+                                            </div>
+                                            {% if badge.earned %}
+                                            <span class="ms-auto badge bg-success">Obtenu</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-muted small">{{ badge.description }}</p>
+                                        {% if not badge.earned %}
+                                        <div class="progress mt-2" style="height: 5px;">
+                                            <div class="progress-bar" 
+                                                 style="width: {{ user.loyalty_profile.points|divide:badge.min_points|multiply:100|floatformat:0 }}%; 
+                                                        background-color: {{ badge.color }}">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            Progression: {{ user.loyalty_profile.points|divide:badge.min_points|multiply:100|floatformat:0 }}%
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Onglet Badges Spéciaux -->
+                        <div class="tab-pane fade" id="special" role="tabpanel">
+                            <div class="row">
+                                {% for badge in all_badges %}
+                                {% if badge.type == 'special' %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="badge-card h-100 {% if badge.earned %}earned{% else %}locked{% endif %}">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas {{ badge.icon }} fa-2x me-3" style="color: {% if badge.earned %}{{ badge.color }}{% else %}#ddd{% endif %}"></i>
+                                            <div>
+                                                <h5 class="mb-0">{{ badge.name }}</h5>
+                                            </div>
+                                            {% if badge.earned %}
+                                            <span class="ms-auto badge bg-success">Obtenu</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-muted small">{{ badge.description }}</p>
+                                        {% if not badge.earned %}
+                                        <small class="text-warning"><i class="fas fa-lock me-1"></i>Non débloqué</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .badge-card {
+        padding: 1.25rem;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+        height: 100%;
+        border: 1px solid #eee;
+    }
+    
+    .badge-card.earned {
+        border-top: 3px solid var(--success);
+    }
+    
+    .badge-card.locked {
+        opacity: 0.7;
+        background-color: #f9f9f9;
+    }
+    
+    .badge-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .nav-tabs .nav-link {
+        color: var(--gray);
+        font-weight: 500;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: var(--orange);
+        font-weight: 600;
+        border-bottom: 2px solid var(--orange);
+    }
+</style>
+{% endblock %}

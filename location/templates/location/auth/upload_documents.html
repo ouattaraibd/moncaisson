@@ -1,0 +1,64 @@
+{% extends "location/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">Téléversement des documents</h3>
+                </div>
+                <div class="card-body">
+                    {% if existing_docs.assurance or existing_docs.carte_grise %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Vous avez déjà uploadé des documents. Les nouveaux fichiers remplaceront les anciens.
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Attestation d'assurance*</label>
+                            {{ form.assurance_document }}
+                            {% if form.assurance_document.errors %}
+                            <div class="text-danger">
+                                {{ form.assurance_document.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">Format: PDF, JPG ou PNG (max 10MB)</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Carte grise*</label>
+                            {{ form.carte_grise_document }}
+                            {% if form.carte_grise_document.errors %}
+                            <div class="text-danger">
+                                {{ form.carte_grise_document.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">Format: PDF, JPG ou PNG (max 10MB)</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle me-2"></i> Envoyer les documents
+                            </button>
+                            <a href="{% url 'proprietaire_dashboard' %}" class="btn btn-outline-secondary">
+                                Retour au tableau de bord
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

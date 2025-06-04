@@ -1,0 +1,92 @@
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead class="bg-light">
+            <tr>
+                <th>Véhicule</th>
+                <th>Dates</th>
+                <th>Prix total</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reservation in reservations %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        {% if reservation.voiture.photo %}
+                        <img src="{{ reservation.voiture.photo.url }}" 
+                             alt="{{ reservation.voiture.marque }}" 
+                             width="60" 
+                             class="rounded me-3">
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-0">{{ reservation.voiture.marque }} {{ reservation.voiture.modele }}</h6>
+                            <small class="text-muted">{{ reservation.voiture.ville }}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {{ reservation.date_debut|date:"d/m/Y" }}<br>
+                    <strong>au</strong><br>
+                    {{ reservation.date_fin|date:"d/m/Y" }}
+                </td>
+                <td>{{ reservation.montant_paye }} XOF</td>
+                <td>
+                    {% if reservation.statut == 'attente' %}
+                    <span class="badge badge-warning">En attente</span>
+                    {% elif reservation.statut == 'confirme' %}
+                    <span class="badge badge-success">Confirmé</span>
+                    {% else %}
+                    <span class="badge badge-danger">Annulé</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'reservation_detail' reservation.id %}" 
+                           class="btn btn-info"
+                           data-toggle="tooltip" 
+                           title="Détails">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        
+                        {% if reservation.statut == 'attente' %}
+                        <form method="post" 
+                              action="{% url 'annuler_reservation' reservation.id %}"
+                              class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="btn btn-danger confirm-submit"
+                                    data-toggle="tooltip"
+                                    title="Annuler">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <a href="{% url 'generer_facture' reservation.id %}" 
+                           class="btn btn-secondary"
+                           data-toggle="tooltip"
+                           title="Facture">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-4">
+                    <img src="{% static 'location/images/no-reservation.svg' %}" 
+                         width="100" 
+                         class="mb-3">
+                    <h5>Aucune réservation trouvée</h5>
+                    <p class="text-muted">Vous n'avez pas encore effectué de réservation</p>
+                    <a href="{% url 'recherche' %}" class="btn btn-orange">
+                        <i class="fas fa-search"></i> Trouver un véhicule
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Facture #{{ reservation.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        h1 { color: #333; text-align: center; }
+        .row { display: flex; margin-bottom: 20px; }
+        .col-md-6 { width: 50%; }
+        .text-end { text-align: right; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background-color: #fd7e14; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        .fw-bold { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Facture #{{ reservation.id }}</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <h3>Informations client</h3>
+            <p>{{ reservation.client.get_full_name }}</p>
+            <p>{{ reservation.client.email }}</p>
+            <p>{{ reservation.client.phone }}</p>
+        </div>
+        
+        <div class="col-md-6 text-end">
+            <h3>Informations location</h3>
+            <p>Date: {{ reservation.date_creation|date:"d/m/Y" }}</p>
+            <p>Voiture: {{ reservation.voiture.marque }} {{ reservation.voiture.modele }}</p>
+            <p>Période: {{ reservation.date_debut|date:"d/m/Y" }} au {{ reservation.date_fin|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-end">Montant (XOF)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Location ({{ reservation.duree }} jours x {{ reservation.voiture.prix_jour }} XOF)</td>
+                <td class="text-end">{{ reservation.montant_paye }}</td>
+            </tr>
+            <tr>
+                <td>Frais de service</td>
+                <td class="text-end">{{ reservation.frais_service }}</td>
+            </tr>
+            <tr class="fw-bold">
+                <td>Total</td>
+                <td class="text-end">{{ reservation.montant_total }}</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

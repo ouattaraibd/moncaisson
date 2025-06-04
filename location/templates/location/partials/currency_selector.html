@@ -1,0 +1,111 @@
+{% load static i18n %}
+
+<div class="currency-selector dropdown">
+  <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" 
+          type="button"
+          id="currencyDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="{% trans 'Sélectionner la devise' %}">
+    <img src="{% static 'location/images/currency/'|add:request.session.devise|add:'.png' %}" 
+         alt="{{ request.session.devise }}"
+         class="currency-flag me-2"
+         width="20"
+         height="15">
+    <span class="currency-code">{{ request.session.devise|default:"XOF" }}</span>
+  </button>
+  
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
+    {% for code, info in devises.items %}
+      <li>
+        <a class="dropdown-item d-flex align-items-center {% if code == request.session.devise %}active{% endif %}"
+           href="{% url 'set_currency' %}?currency={{ code }}&next={{ request.path|urlencode }}"
+           data-currency="{{ code }}"
+           title="{{ info.name }}">
+          <img src="{% static 'location/images/currency/'|add:code|add:'.png' %}" 
+               alt="{{ code }}"
+               class="currency-flag me-2"
+               width="20"
+               height="15">
+          <div class="d-flex flex-column">
+            <span class="currency-code">{{ code }}</span>
+            <small class="text-muted currency-name">{{ info.name }}</small>
+          </div>
+          {% if code == 'XOF' %}
+            <small class="ms-auto text-muted">{% trans "Par défaut" %}</small>
+          {% endif %}
+        </a>
+      </li>
+      {% if forloop.counter == 3 %}
+        <li><hr class="dropdown-divider"></li>
+      {% endif %}
+    {% endfor %}
+    
+    <li class="dropdown-footer px-3 py-2 small text-muted">
+      {% trans "Taux mis à jour à" %} {{ currency_last_update|time:"H:i" }}
+    </li>
+  </ul>
+</div>
+
+<style>
+.currency-selector .currency-flag {
+  border: 1px solid #dee2e6;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.currency-selector .dropdown-item {
+  padding: 0.5rem 1rem;
+}
+
+.currency-selector .dropdown-item .currency-name {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.currency-selector .dropdown-footer {
+  background-color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+  .currency-selector .dropdown-menu {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 60px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Sauvegarde en AJAX pour une meilleure expérience
+  document.querySelectorAll('.currency-selector .dropdown-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      const currency = this.getAttribute('data-currency');
+      
+      fetch("{% url 'set_currency' %}?currency=" + currency, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          window.location.reload();
+        }
+      })
+      .catch(error => {
+        window.location.href = this.getAttribute('href');
+      });
+    });
+  });
+});
+</script>

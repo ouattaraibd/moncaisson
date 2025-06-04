@@ -1,0 +1,65 @@
+{% extends "location/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-road me-2"></i> Mon historique de conduite</h2>
+        <a href="{% url 'loueur_dashboard' %}" class="btn btn-outline-orange">
+            <i class="fas fa-arrow-left me-1"></i> Retour
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if history %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Véhicule</th>
+                            <th>Dates</th>
+                            <th>Distance</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in history %}
+                        <tr>
+                            <td>
+                                <strong>{{ entry.vehicle_model }}</strong>
+                                {% if entry.reservation %}
+                                <br>
+                                <small class="text-muted">Réservation #{{ entry.reservation.id }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ entry.start_date|date:"d/m/Y" }}<br>
+                                <small>au {{ entry.end_date|date:"d/m/Y" }}</small>
+                            </td>
+                            <td>{{ entry.distance_covered }} km</td>
+                            <td>{{ entry.notes|default:"-"|truncatechars:30 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-history fa-4x text-muted mb-3"></i>
+                <h5>Aucun historique de conduite</h5>
+                <p class="text-muted">Vos locations apparaîtront ici après vos premières réservations</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(253, 126, 20, 0.05);
+    }
+</style>
+{% endblock %}

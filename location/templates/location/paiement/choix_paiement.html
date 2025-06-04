@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Choisissez votre méthode de paiement</h2>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card payment-method" data-method="ORANGE">
+                <img src="{% static 'img/orange-money.png' %}" class="card-img-top">
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card payment-method" data-method="WAVE">
+                <img src="{% static 'img/wave.png' %}" class="card-img-top">
+            </div>
+        </div>
+        
+        <div class="col-md-6 mt-3">
+            <div class="card payment-method" data-method="PAYPAL">
+                <img src="{% static 'img/paypal.png' %}" class="card-img-top">
+            </div>
+        </div>
+        
+        <div class="col-md-6 mt-3">
+            <div class="card payment-method" data-method="CARTE">
+                <img src="{% static 'img/credit-card.png' %}" class="card-img-top">
+            </div>
+        </div>
+    </div>
+    
+    <form id="paymentForm" method="post" action="{% url 'process_payment' reservation.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="payment_method" id="paymentMethod">
+    </form>
+</div>
+
+<script>
+document.querySelectorAll('.payment-method').forEach(card => {
+    card.addEventListener('click', () => {
+        document.getElementById('paymentMethod').value = card.dataset.method;
+        document.getElementById('paymentForm').submit();
+    });
+});
+</script>
+{% endblock %}

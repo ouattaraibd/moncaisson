@@ -1,0 +1,48 @@
+{% extends 'location/base.html' %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="hero-section bg-light p-5 rounded-3 text-center">
+            <h1 class="display-4">Louez vos voitures 100% sécurisés</h1>
+            <p class="lead">Trouvez le véhicule parfait pour vos déplacements en Côte d'Ivoire</p>
+            <a href="{% url 'recherche' %}" class="btn btn-orange btn-lg mt-3">
+                <i class="bi bi-search"></i> Trouver un véhicule
+            </a>
+        </div>
+    </div>
+</div>
+
+<h2 class="mb-4">Nos véhicules récents</h2>
+<div class="row">
+    {% for voiture in voitures %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <img src="{{ voiture.photo.url }}" class="card-img-top" alt="{{ voiture.marque }} {{ voiture.modele }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ voiture.marque }} {{ voiture.modele }}</h5>
+                <p class="card-text">
+                    <i class="bi bi-geo-alt"></i> {{ voiture.ville }}<br>
+                    <i class="bi bi-cash"></i> {{ voiture.prix_jour }} FCFA/jour
+                </p>
+            </div>
+            <div class="card-footer bg-white border-0">
+                <a href="#" class="btn btn-primary w-100">
+                    <i class="bi bi-calendar-check"></i> Réserver
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">Aucun véhicule disponible pour le moment.</div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="text-center mt-4">
+    <a href="{% url 'recherche' %}" class="btn btn-outline-orange">
+        Voir tous les véhicules <i class="bi bi-arrow-right"></i>
+    </a>
+</div>
+{% endblock %}

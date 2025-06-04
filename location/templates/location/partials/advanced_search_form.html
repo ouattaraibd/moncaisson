@@ -1,0 +1,24 @@
+<form method="get" class="mb-4 p-3 bg-light rounded">
+    <div class="row g-3">
+        <div class="col-md-3">
+            {{ search_form.prix_min }}
+        </div>
+        <div class="col-md-3">
+            {{ search_form.prix_max }}
+        </div>
+        <div class="col-md-3">
+            {{ search_form.transmission }}
+        </div>
+        <div class="col-md-3">
+            <div class="form-check">
+                {{ search_form.climatisation }}
+                <label class="form-check-label">Climatisation</label>
+            </div>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-funnel"></i> Filtrer
+            </button>
+        </div>
+    </div>
+</form>

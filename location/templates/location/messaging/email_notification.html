@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouveau message - MonCaisson</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            color: #2c3e50;
+            border-bottom: 1px solid #eeeeee;
+            padding-bottom: 15px;
+        }
+        .message-preview {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .footer {
+            font-size: 12px;
+            color: #777777;
+            border-top: 1px solid #eeeeee;
+            padding-top: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h2>Nouveau message de {{ sender_name }}</h2>
+        </div>
+        
+        <p>Vous avez reçu un nouveau message sur votre compte MonCaisson :</p>
+        
+        <div class="message-preview">
+            <p>{{ message_preview }}...</p>
+        </div>
+        
+        <a href="{{ site_url }}/messaging/inbox/{{ conversation_id }}/" class="button">
+            Voir la conversation complète
+        </a>
+        
+        <div class="footer">
+            <p>© {% now "Y" %} MonCaisson - Tous droits réservés</p>
+            <p><em>Ceci est un message automatique, merci de ne pas y répondre directement.</em></p>
+        </div>
+    </div>
+</body>
+</html>

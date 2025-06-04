@@ -1,0 +1,106 @@
+{% extends "location/base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Tableau de bord Admin</h2>
+    
+    <!-- Cartes de statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5>Utilisateurs</h5>
+                    <h2>{{ stats.total_users }}</h2>
+                    <small>+{{ stats.new_users }} ce mois</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>Annonces actives</h5>
+                    <h2>{{ stats.active_listings }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>Réservations</h5>
+                    <h2>{{ stats.total_reservations }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5>Revenus (30j)</h5>
+                    <h2>{{ stats.monthly_revenue|intcomma }} XOF</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sections d'activité -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Nouveaux utilisateurs</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for user in recent_activity.new_users %}
+                        <li class="list-group-item">
+                            {{ user.username }} - {{ user.date_joined|date:"d/m/Y" }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Vérifications en attente</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for doc in recent_activity.pending_verifications %}
+                        <li class="list-group-item">
+                            <a href="{% url 'admin_verify_detail' doc.id %}">
+                                {{ doc.user.username }}
+                            </a>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item">Aucune vérification en attente</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Réservations récentes</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for res in recent_activity.recent_reservations %}
+                        <li class="list-group-item">
+                            {{ res.voiture }} par {{ res.client }}
+                            <span class="badge bg-secondary float-end">
+                                {{ res.montant_paye|intcomma }} XOF
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

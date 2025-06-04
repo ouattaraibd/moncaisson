@@ -1,0 +1,522 @@
+{% extends 'location/base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Affichage des messages système -->
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Notification de vérification requise -->
+{% if not user_is_verified %}
+<div class="container mt-3">
+    <div class="alert alert-warning d-flex align-items-center">
+        <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
+        <div>
+            <h5 class="alert-heading mb-2">Vérification requise</h5>
+            <p class="mb-0">
+                Pour publier des véhicules sur notre plateforme, vous devez compléter la vérification de votre identité.
+                Ce processus simple permet de garantir la sécurité de notre communauté.
+            </p>
+            <hr>
+            <a href="{% url 'upload_verification' %}" class="btn btn-sm btn-warning">
+                <i class="fas fa-id-card me-1"></i> Compléter ma vérification
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-orange text-white">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h3 class="mb-0"><i class="fas fa-car me-2"></i> Ajouter un véhicule</h3>
+                        <a href="{% url 'accueil' %}" class="btn btn-sm btn-light">
+                            <i class="fas fa-arrow-left me-1"></i> Retour
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Affichage des erreurs non-field -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger mb-4">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Affichage des erreurs par champ -->
+                        {% for field in form %}
+                            {% if field.errors %}
+                            <div class="alert alert-danger mb-4">
+                                <strong>{{ field.label }}:</strong> 
+                                {{ field.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Section 1: Informations générales -->
+                        <div class="mb-5">
+                            <h5 class="text-orange mb-4"><i class="fas fa-info-circle me-2"></i> Informations générales</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.marque.id_for_label }}" class="form-label">Marque</label>
+                                    {{ form.marque }}
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir la marque du véhicule.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.modele.id_for_label }}" class="form-label">Modèle</label>
+                                    {{ form.modele }}
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir le modèle du véhicule.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.annee.id_for_label }}" class="form-label">Année</label>
+                                    {{ form.annee }}
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir une année valide (1990-{% now "Y" %}).
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.type_vehicule.id_for_label }}" class="form-label">Type de véhicule</label>
+                                    {{ form.type_vehicule }}
+                                    <div class="invalid-feedback">
+                                        Veuillez sélectionner un type de véhicule.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 2: Détails techniques -->
+                        <div class="mb-5">
+                            <h5 class="text-orange mb-4"><i class="fas fa-cogs me-2"></i> Détails techniques</h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="{{ form.transmission.id_for_label }}" class="form-label">Transmission</label>
+                                    {{ form.transmission }}
+                                    <div class="invalid-feedback">
+                                        Veuillez sélectionner un type de transmission.
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="{{ form.carburant.id_for_label }}" class="form-label">Carburant</label>
+                                    {{ form.carburant }}
+                                    <div class="invalid-feedback">
+                                        Veuillez sélectionner un type de carburant.
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="{{ form.kilometrage.id_for_label }}" class="form-label">Kilométrage</label>
+                                    <div class="input-group">
+                                        {{ form.kilometrage }}
+                                        <span class="input-group-text">km</span>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir un kilométrage valide.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.nb_places.id_for_label }}" class="form-label">Nombre de places</label>
+                                    {{ form.nb_places }}
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir un nombre de places valide (1-9).
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.nb_portes.id_for_label }}" class="form-label">Nombre de portes</label>
+                                    {{ form.nb_portes }}
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir un nombre de portes valide (2-5).
+                                    </div>
+                                </div>
+                                
+                                <!-- Section Équipements -->
+                                <div class="col-12 mt-3">
+                                    <h6 class="text-orange mb-3"><i class="fas fa-check-circle me-2"></i> Équipements</h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                {{ form.climatisation }}
+                                                <label class="form-check-label" for="{{ form.climatisation.id_for_label }}">
+                                                    Climatisation
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                {{ form.gps }}
+                                                <label class="form-check-label" for="{{ form.gps.id_for_label }}">
+                                                    GPS
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                {{ form.siege_bebe }}
+                                                <label class="form-check-label" for="{{ form.siege_bebe.id_for_label }}">
+                                                    Siège bébé
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                {{ form.bluetooth }}
+                                                <label class="form-check-label" for="{{ form.bluetooth.id_for_label }}">
+                                                    Bluetooth
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Caution -->
+                        <div class="mb-5">
+                            <h5 class="text-orange mb-4"><i class="fas fa-shield-alt me-2"></i> Caution</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.caution_required }}
+                                        <label class="form-check-label" for="{{ form.caution_required.id_for_label }}">
+                                            Requérir une caution
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6" id="cautionAmountField" style="display: none;">
+                                    <label for="{{ form.caution_amount.id_for_label }}" class="form-label">Montant de la caution</label>
+                                    <div class="input-group">
+                                        {{ form.caution_amount }}
+                                        <span class="input-group-text">XOF</span>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir un montant valide (max 1 000 000 XOF).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 3: Tarification et disponibilité -->
+                        <div class="mb-5">
+                            <h5 class="text-orange mb-4"><i class="fas fa-tag me-2"></i> Tarification et disponibilité</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.prix_jour.id_for_label }}" class="form-label">Prix par jour</label>
+                                    <div class="input-group">
+                                        {{ form.prix_jour }}
+                                        <span class="input-group-text">XOF</span>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir un prix valide (minimum 1000 XOF).
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.ville.id_for_label }}" class="form-label">Ville</label>
+                                    {{ form.ville }}
+                                    <div class="invalid-feedback">
+                                        Veuillez saisir une ville.
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        {{ form.disponible }}
+                                        <label class="form-check-label" for="{{ form.disponible.id_for_label }}">Disponible immédiatement</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 4: Photos du véhicule -->
+                        <div class="mb-4">
+                            <h5 class="text-orange mb-4"><i class="fas fa-camera me-2"></i> Photos du véhicule</h5>
+                            <div class="mb-3">
+                                <label for="{{ form.photo.id_for_label }}" class="form-label">Photo principale</label>
+                                {{ form.photo }}
+                                <div class="form-text">Image claire et de bonne qualité (format JPG/PNG, max 5MB)</div>
+                                <div class="invalid-feedback">
+                                    Veuillez uploader une photo valide.
+                                </div>
+                            </div>
+                            
+                            <!-- Images supplémentaires -->
+                            <div class="mb-3">
+                                <label class="form-label">Photos supplémentaires (optionnel)</label>
+                                <input type="file" class="form-control" multiple accept="image/*" name="additional_images">
+                                <div class="form-text">Ajoutez jusqu'à 5 photos supplémentaires (max 5MB chacune)</div>
+                            </div>
+                            
+                            <div class="d-flex flex-wrap gap-2" id="image-preview">
+                                <!-- Les aperçus des images s'afficheront ici -->
+                            </div>
+                        </div>
+                        
+                        <!-- Section 5: Description -->
+                        <div class="mb-4">
+                            <h5 class="text-orange mb-4"><i class="fas fa-align-left me-2"></i> Description</h5>
+                            <div class="mb-3">
+                                {{ form.description }}
+                                <div class="form-text">Décrivez les particularités de votre véhicule (équipements, état, etc.)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <button type="reset" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-undo me-1"></i> Réinitialiser
+                            </button>
+                            <button type="submit" class="btn btn-orange" {% if not user_is_verified %}disabled{% endif %}>
+                                <i class="fas fa-save me-1"></i> Enregistrer le véhicule
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    :root {
+        --orange: #FF7A00;
+        --orange-dark: #e06b00;
+        --orange-light: #ff9833;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --light-gray: #f8f9fa;
+    }
+    
+    .bg-orange {
+        background-color: var(--orange) !important;
+    }
+    
+    .text-orange {
+        color: var(--orange) !important;
+    }
+    
+    .btn-orange {
+        background-color: var(--orange);
+        border-color: var(--orange);
+        color: white;
+    }
+    
+    .btn-orange:hover {
+        background-color: var(--orange-dark);
+        border-color: var(--orange-dark);
+        color: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--orange);
+        box-shadow: 0 0 0 0.25rem rgba(255, 122, 0, 0.25);
+    }
+    
+    .card {
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        padding: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    #image-preview .preview-item {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 5px;
+        border: 1px solid #dee2e6;
+        position: relative;
+    }
+    
+    #image-preview .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    #image-preview .remove-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: rgba(255, 0, 0, 0.7);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        cursor: pointer;
+    }
+    
+    .alert {
+        border-radius: 0.5rem;
+    }
+    
+    .is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: #dc3545;
+    }
+    
+    .was-validated .form-control:invalid ~ .invalid-feedback,
+    .was-validated .form-control:invalid ~ .invalid-tooltip,
+    .was-validated .form-select:invalid ~ .invalid-feedback,
+    .was-validated .form-select:invalid ~ .invalid-tooltip {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Aperçu des images avant upload
+document.querySelector('input[name="additional_images"]').addEventListener('change', function(e) {
+    const preview = document.getElementById('image-preview');
+    preview.innerHTML = '';
+    
+    if (this.files) {
+        Array.from(this.files).slice(0, 5).forEach(file => {
+            if (!file.type.match('image.*')) {
+                alert('Seules les images sont autorisées (JPG, PNG)');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert('L\'image ' + file.name + ' est trop volumineuse (max 5MB)');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <span class="remove-btn">&times;</span>
+                `;
+                preview.appendChild(div);
+                
+                div.querySelector('.remove-btn').addEventListener('click', () => {
+                    div.remove();
+                });
+            }
+            
+            reader.readAsDataURL(file);
+        });
+    }
+});
+
+// Validation du formulaire
+(function () {
+    'use strict'
+    
+    const forms = document.querySelectorAll('.needs-validation')
+    
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            
+            form.classList.add('was-validated')
+        }, false)
+    })
+})();
+
+// Gestion de la suppression des images
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-btn')) {
+        e.target.parentElement.remove();
+    }
+});
+
+// Affichage dynamique des erreurs
+document.addEventListener('DOMContentLoaded', function() {
+    const fields = document.querySelectorAll('.form-control, .form-select');
+    fields.forEach(field => {
+        field.addEventListener('input', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+            } else {
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+});
+
+// Gestion de l'affichage du champ caution
+function toggleCautionField(checkbox) {
+    const amountField = document.getElementById('cautionAmountField');
+    if (checkbox.checked) {
+        amountField.style.display = 'block';
+    } else {
+        amountField.style.display = 'none';
+        document.getElementById('{{ form.caution_amount.id_for_label }}').value = 0;
+    }
+}
+
+// Initialisation au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    const cautionCheckbox = document.getElementById('{{ form.caution_required.id_for_label }}');
+    if (cautionCheckbox) {
+        toggleCautionField(cautionCheckbox);
+        // Écouteur d'événement pour les changements futurs
+        cautionCheckbox.addEventListener('change', function() {
+            toggleCautionField(this);
+        });
+    }
+});
+
+// Désactivation du formulaire si non vérifié
+{% if not user_is_verified %}
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.querySelectorAll('input, select, textarea, button').forEach(element => {
+            if (!element.classList.contains('btn-outline-secondary')) {
+                element.disabled = true;
+            }
+        });
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

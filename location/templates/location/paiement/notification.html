@@ -1,0 +1,10 @@
+<script>
+const socket = new WebSocket(
+    `ws://${window.location.host}/ws/notifications/{{ request.user.id }}/`
+);
+
+socket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    toastr.info(data.message);  // Utilisez Toastr ou autre lib
+};
+</script>

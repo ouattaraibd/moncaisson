@@ -1,0 +1,53 @@
+{% extends 'location/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    {% if success %}
+    <div class="alert alert-success">
+        <h4><i class="fas fa-check-circle"></i> Paiement confirmé!</h4>
+        <div class="mt-3">
+            <p>Votre réservation <strong>#{{ reservation.id }}</strong> a été confirmée avec succès.</p>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Détails de la réservation</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Véhicule:</strong> {{ reservation.voiture.marque }} {{ reservation.voiture.modele }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Période:</strong> {{ reservation.date_debut|date:"d/m/Y" }} - {{ reservation.date_fin|date:"d/m/Y" }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Montant payé:</strong> {{ paiement.montant|floatformat:0 }} XOF
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Méthode de paiement:</strong> {{ paiement.get_methode_display }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h4><i class="fas fa-info-circle"></i> Paiement en cours de traitement</h4>
+        <p class="mt-2">
+            Votre transaction pour la réservation <strong>#{{ reservation.id }}</strong> est en cours de traitement.
+            Vous recevrez une notification par email une fois le paiement confirmé.
+        </p>
+        <div class="progress mt-3">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'mes_reservations' %}" class="btn btn-outline-primary">
+            <i class="fas fa-list"></i> Mes réservations
+        </a>
+        <a href="{% url 'voiture_detail' reservation.voiture.id %}" class="btn btn-primary">
+            <i class="fas fa-car"></i> Voir le véhicule
+        </a>
+    </div>
+</div>
+{% endblock %}

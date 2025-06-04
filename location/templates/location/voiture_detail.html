@@ -1,0 +1,284 @@
+{% extends 'location/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-orange text-white">
+            <h3 class="mb-0">{{ voiture.marque }} {{ voiture.modele }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {% if voiture.photo %}
+                    <img src="{{ voiture.photo.url }}" class="img-fluid rounded" alt="{{ voiture.marque }}">
+                    {% else %}
+                    <img src="{% static 'location/images/default-car.jpg' %}" class="img-fluid rounded" alt="Voiture par défaut">
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <h4>Détails du véhicule</h4>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Propriétaire:</strong> {{ voiture.proprietaire.get_full_name|default:voiture.proprietaire.username }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Prix/jour:</strong> {{ voiture.prix_jour|floatformat:"0" }} XOF
+                            {% if voiture.avec_chauffeur %}
+                                (+ {{ voiture.prix_chauffeur|floatformat:"0" }} XOF pour le chauffeur)
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Ville:</strong> {{ voiture.ville }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Statut:</strong> 
+                            <span class="badge badge-{% if voiture.disponible %}success{% else %}danger{% endif %}">
+                                {% if voiture.disponible %}Disponible{% else %}Indisponible{% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Année:</strong> {{ voiture.annee }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Type:</strong> {{ voiture.get_type_vehicule_display }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Transmission:</strong> {{ voiture.get_transmission_display }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Carburant:</strong> {{ voiture.get_carburant_display }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Options:</strong>
+                            {% if voiture.avec_chauffeur %}<span class="badge bg-info">Avec chauffeur</span>{% endif %}
+                            {% if voiture.climatisation %}<span class="badge bg-secondary">Climatisation</span>{% endif %}
+                            {% if voiture.gps %}<span class="badge bg-secondary">GPS</span>{% endif %}
+                            {% if voiture.siege_bebe %}<span class="badge bg-secondary">Siège bébé</span>{% endif %}
+                            {% if voiture.bluetooth %}<span class="badge bg-secondary">Bluetooth</span>{% endif %}
+                        </li>
+                    </ul>
+
+                    <!-- Section Caution -->
+                    <div class="card mt-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i> Caution</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if voiture.caution_required and voiture.caution_amount > 0 %}
+                                <p class="mb-1">
+                                    <strong>Montant de la caution :</strong> 
+                                    <span class="text-success">{{ voiture.caution_amount|floatformat:0 }} XOF</span>
+                                </p>
+                                <small class="text-muted">
+                                    Ce montant sera bloqué sur votre compte lors de la réservation et restitué après vérification du véhicule.
+                                </small>
+                            {% else %}
+                                <p class="mb-0">Aucune caution requise pour ce véhicule.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Formulaire de vérification de disponibilité -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5>Vérifier disponibilité</h5>
+                </div>
+                <div class="card-body">
+                    <form id="dispoForm">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label for="date_debut" class="form-label">Date de début</label>
+                                <input type="date" class="form-control" id="date_debut" required
+                                       min="{{ today|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="date_fin" class="form-label">Date de fin</label>
+                                <input type="date" class="form-control" id="date_fin" required
+                                       min="{{ today|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> Vérifier
+                                </button>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="reset" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times"></i> Effacer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="dispoResult" class="mt-3"></div>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="mt-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'voitures' %}" class="btn btn-orange">
+                        <i class="fas fa-arrow-left"></i> Retour à la liste
+                    </a>
+                    
+                    {% if user.is_authenticated %}
+                        {% if user.user_type == 'LOUEUR' %}
+                        <button id="reserverBtn" class="btn btn-primary" {% if not voiture.disponible %}disabled{% endif %}>
+                            <i class="fas fa-calendar-check"></i> Réserver
+                        </button>
+                        {% endif %}
+                        
+                        {% if in_favoris %}
+                        <a href="{% url 'retirer_favoris' voiture.id %}" class="btn btn-warning">
+                            <i class="fas fa-heart-broken"></i> Retirer des favoris
+                        </a>
+                        {% else %}
+                        <a href="{% url 'ajouter_favoris' voiture.id %}" class="btn btn-outline-danger">
+                            <i class="fas fa-heart"></i> Ajouter aux favoris
+                        </a>
+                        {% endif %}
+                        
+                        {% if user == voiture.proprietaire %}
+                        <a href="{% url 'modifier_voiture' voiture.id %}" class="btn btn-secondary">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Bouton d'évaluation conditionnel -->
+                        {% for reservation in user.reservations_client.all %}
+                            {% if reservation.voiture_id == voiture.id and reservation.statut == 'termine' %}
+                                <a href="{% url 'ajouter_evaluation' voiture.id %}" class="btn btn-info">
+                                    <i class="fas fa-star"></i> Évaluer
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <a href="{% url 'connexion' %}?next={% url 'voiture_detail' voiture.id %}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Connectez-vous pour réserver
+                        </a>
+                    {% endif %}
+                </div>
+
+                {% if user.is_authenticated and user.user_type == 'LOUEUR' %}
+                <div class="mt-3 d-flex flex-wrap gap-2">
+                    <a href="{% url 'loueur_dashboard' %}#favoris" class="btn btn-outline-info">
+                        <i class="fas fa-heart"></i> Mes Favoris
+                    </a>
+                    <a href="{% url 'loueur_dashboard' %}#mes-reservations" class="btn btn-outline-info">
+                        <i class="fas fa-calendar-alt"></i> Mes Réservations
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section Évaluations -->
+<div class="container mt-4">
+    {% include 'location/partials/evaluations.html' %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du formulaire de disponibilité
+    const dispoForm = document.getElementById('dispoForm');
+    if (dispoForm) {
+        dispoForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const dateDebut = document.getElementById('date_debut').value;
+            const dateFin = document.getElementById('date_fin').value;
+            
+            if (!dateDebut || !dateFin) {
+                alert('Veuillez sélectionner les deux dates');
+                return;
+            }
+            
+            fetch(`/api/voiture/{{ voiture.id }}/disponibilite/?date_debut=${dateDebut}&date_fin=${dateFin}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById('dispoResult');
+                    const reserverBtn = document.getElementById('reserverBtn');
+                    
+                    if (data.disponible) {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Disponible du ${new Date(dateDebut).toLocaleDateString()} au ${new Date(dateFin).toLocaleDateString()}
+                                </span>
+                                <a href="{% url 'reserver_voiture' voiture.id %}?date_debut=${dateDebut}&date_fin=${dateFin}" 
+                                   class="btn btn-sm btn-success">
+                                    <i class="fas fa-calendar-check me-1"></i> Réserver
+                                </a>
+                            </div>`;
+                        
+                        if (reserverBtn) {
+                            reserverBtn.disabled = false;
+                        }
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-times-circle me-2"></i>
+                                Indisponible pour les dates sélectionnées
+                            </div>`;
+                        
+                        if (reserverBtn) {
+                            reserverBtn.disabled = true;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur est survenue lors de la vérification');
+                });
+        });
+    }
+    
+    // Gestion du bouton Réserver
+    const reserverBtn = document.getElementById('reserverBtn');
+    if (reserverBtn) {
+        reserverBtn.addEventListener('click', function(e) {
+            if (!confirm('Confirmez-vous la réservation de ce véhicule ?')) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Définir la date min pour date_fin
+    const dateDebutInput = document.getElementById('date_debut');
+    const dateFinInput = document.getElementById('date_fin');
+    
+    if (dateDebutInput && dateFinInput) {
+        dateDebutInput.addEventListener('change', function() {
+            dateFinInput.min = this.value;
+            if (dateFinInput.value && dateFinInput.value < this.value) {
+                dateFinInput.value = this.value;
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.btn-orange {
+    background-color: #fd7e14;
+    color: white;
+    border: none;
+}
+.btn-orange:hover {
+    background-color: #e67312;
+    color: white;
+}
+.gap-2 {
+    gap: 0.5rem;
+}
+.badge {
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+}
+</style>
+{% endblock %}

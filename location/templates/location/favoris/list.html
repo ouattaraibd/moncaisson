@@ -1,0 +1,29 @@
+{% extends "location/base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Mes véhicules favoris</h2>
+    
+    {% if favoris %}
+    <div class="row">
+        {% for favori in favoris %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <img src="{{ favori.voiture.photo.url }}" class="card-img-top" alt="{{ favori.voiture.marque }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ favori.voiture.marque }} {{ favori.voiture.modele }}</h5>
+                    <a href="{% url 'retirer_favoris' favori.voiture.id %}" class="btn btn-danger">
+                        Retirer des favoris
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        Vous n'avez aucun véhicule en favoris pour le moment.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Livraisons - Rapport PDF</title>
+    <style type="text/css">
+        /* Reset et styles de base */
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        /* En-tête */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #fd7e14;
+        }
+        
+        .header h1 {
+            color: #fd7e14;
+            font-size: 18pt;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 9pt;
+        }
+        
+        /* Tableau */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th {
+            background-color: #fd7e14;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 9pt;
+        }
+        
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 9pt;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Pied de page */
+        .footer {
+            margin-top: 30px;
+            font-size: 8pt;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        /* Numérotation des pages */
+        .page-number:after {
+            content: counter(page);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Rapport des Livraisons</h1>
+        <p>Généré le {% now "j F Y à H:i" %}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Réservation</th>
+                <th>Client</th>
+                <th>Véhicule</th>
+                <th>Statut Livraison</th>
+                <th>Date Livraison</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for delivery in object_list %}
+            <tr>
+                <td>{{ delivery.reservation.id }}</td>
+                <td>{{ delivery.reservation.client.get_full_name|default:delivery.reservation.client.username }}</td>
+                <td>{{ delivery.reservation.voiture.marque }} {{ delivery.reservation.voiture.modele }}</td>
+                <td>{{ delivery.get_status_display }}</td>
+                <td>{{ delivery.delivery_date|date:"d/m/Y H:i"|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center;">Aucune livraison trouvée</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Page <span class="page-number"></span> - © {% now "Y" %} MonCaisson - Tous droits réservés
+    </div>
+</body>
+</html>

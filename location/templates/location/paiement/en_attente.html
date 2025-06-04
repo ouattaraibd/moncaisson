@@ -1,0 +1,33 @@
+<table class="table">
+    <thead>
+        <tr>
+            <th>Client</th>
+            <th>Voiture</th>
+            <th>Dates</th>
+            <th>Montant</th>
+            <th>Statut</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reservation in reservations %}
+        <tr>
+            <td>{{ reservation.client.get_full_name|default:reservation.client.username }}</td>
+            <td>{{ reservation.voiture.marque }} {{ reservation.voiture.modele }}</td>
+            <td>{{ reservation.date_debut|date:"d/m/Y" }} - {{ reservation.date_fin|date:"d/m/Y" }}</td>
+            <td>{{ reservation.montant_total }} XOF</td>
+            <td>
+                <span class="badge bg-warning">{{ reservation.get_statut_display }}</span>
+                {% if reservation.paiement %}
+                    <br><small>Paiement sera traité: {{ reservation.date_creation|date:"d/m/Y H:i" }}</small>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'process_paiement' reservation.id %}" class="btn btn-sm btn-primary">
+                    Traiter le paiement
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

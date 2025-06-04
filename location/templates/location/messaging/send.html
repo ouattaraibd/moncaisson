@@ -1,0 +1,26 @@
+{% extends "location/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Envoyer un message à {{ recipient.get_full_name|default:recipient.username }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea class="form-control" name="message" rows="5" 
+                              placeholder="Écrivez votre message ici..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Envoyer
+                </button>
+                <a href="{% url 'some_inbox_view' %}" class="btn btn-secondary">
+                    Annuler
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

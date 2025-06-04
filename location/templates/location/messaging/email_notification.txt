@@ -1,0 +1,17 @@
+Bonjour,
+
+{{ sender_name }} vous a envoyé un nouveau message :
+
+-----------------------------------------
+{{ message_preview }}...
+-----------------------------------------
+
+Pour répondre, rendez-vous sur :
+{{ site_url }}/messaging/inbox/{{ conversation_id }}/
+
+Cordialement,
+L'équipe MonCaisson
+
+-----------------------------------------
+Ne répondez pas directement à cet email.
+Message automatique - {{ now|date:"d/m/Y H:i" }}

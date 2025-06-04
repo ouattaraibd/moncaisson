@@ -1,0 +1,20 @@
+{% extends "location/admin/change_list.html" %}
+
+{% block content_title %}
+    {{ block.super }}
+    <div class="admin-actions">
+        <a href="{% url 'admin:send_verification_reminders' %}" class="button">
+            Envoyer des rappels
+        </a>
+        <a href="{% url 'admin:export_proprietaires' %}" class="button">
+            Exporter les données
+        </a>
+    </div>
+{% endblock %}
+
+{% block filters %}
+    <div class="custom-filter">
+        <h3>Filtres avancés</h3>
+        {{ block.super }}
+    </div>
+{% endblock %}

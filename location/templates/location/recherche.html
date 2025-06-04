@@ -1,0 +1,245 @@
+{% extends "location/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-0">
+                <i class="bi bi-search me-2"></i>Résultats de recherche
+                {% if ville or prix_max or type_vehicule %}
+                <small class="text-muted fs-6">
+                    {% if ville %}<span class="badge bg-info me-1">{{ ville }}</span>{% endif %}
+                    {% if prix_max %}<span class="badge bg-success me-1">Max {{ prix_max }} FCFA/jour</span>{% endif %}
+                    {% if type_vehicule %}<span class="badge bg-primary">{{ type_vehicule }}</span>{% endif %}
+                </small>
+                {% endif %}
+            </h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-outline-secondary btn-sm" id="refresh-search">
+                <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+            </button>
+        </div>
+    </div>
+    
+    <!-- Formulaire de recherche avancée -->
+    {% block search_form %}
+        {% include 'location/partials/advanced_search_form.html' %}
+    {% endblock %}
+    
+    <!-- Résultats -->
+    <div class="row" id="search-results">
+        {% for voiture in object_list %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm hover-effect">
+                <!-- Badge Nouveauté -->
+                {% if voiture.est_nouveau %}
+                <span class="position-absolute top-0 start-0 translate-middle-y badge bg-{{ voiture.est_nouveau|yesno:'danger,primary' }} ms-2">
+                    <i class="bi bi-{{ voiture.est_nouveau|yesno:'star-fill,lightning' }}"></i> 
+                    {{ voiture.est_nouveau|yesno:'Nouveau,Promo' }}
+                </span>
+                {% endif %}
+                
+                <img src="{{ voiture.photo.url }}" class="card-img-top img-cover" 
+                     alt="{{ voiture.marque }} {{ voiture.modele }}" 
+                     loading="lazy">
+                
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">
+                        {{ voiture.marque }} {{ voiture.modele }}
+                        <small class="text-muted">({{ voiture.annee }})</small>
+                    </h5>
+                    
+                    <div class="card-text mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-orange text-white">
+                                {{ voiture.get_type_vehicule_display }}
+                            </span>
+                            <span class="text-muted small">
+                                <i class="bi bi-{{ voiture.est_disponible|yesno:'check-circle,clock' }}-fill text-{{ voiture.est_disponible|yesno:'success,warning' }}"></i> 
+                                {{ voiture.est_disponible|yesno:'Disponible,En location' }}
+                            </span>
+                        </div>
+                        
+                        <p class="mb-1">
+                            <i class="bi bi-geo-alt-fill text-primary"></i> 
+                            <strong>Localisé à :</strong> {{ voiture.ville }}
+                        </p>
+                        <p class="mb-1">
+                            <i class="bi bi-cash-stack text-success"></i> 
+                            <strong>Prix :</strong> 
+                            <span class="price" data-price="{{ voiture.prix_jour }}">
+                                {{ voiture.prix_jour|floatformat:"0" }}
+                            </span> FCFA/jour
+                        </p>
+                        
+                        <!-- Équipements (icones) -->
+                        <div class="mt-2 equipment-badges">
+                            {% if voiture.climatisation %}
+                            <span class="badge bg-light text-dark me-1" data-bs-toggle="tooltip" title="Climatisation">
+                                <i class="bi bi-snow2"></i>
+                            </span>
+                            {% endif %}
+                            {% if voiture.gps %}
+                            <span class="badge bg-light text-dark me-1" data-bs-toggle="tooltip" title="Système GPS">
+                                <i class="bi bi-geo-alt"></i>
+                            </span>
+                            {% endif %}
+                            {% if voiture.bluetooth %}
+                            <span class="badge bg-light text-dark me-1" data-bs-toggle="tooltip" title="Bluetooth">
+                                <i class="bi bi-bluetooth"></i>
+                            </span>
+                            {% endif %}
+                            {% if voiture.siege_bebe %}
+                            <span class="badge bg-light text-dark me-1" data-bs-toggle="tooltip" title="Siège bébé">
+                                <i class="bi bi-emoji-smile"></i>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-auto">
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'voiture_detail' pk=voiture.id %}" 
+                               class="btn btn-outline-{{ voiture.est_disponible|yesno:'primary,secondary' }} btn-sm flex-grow-1">
+                                <i class="bi bi-{{ voiture.est_disponible|yesno:'info-circle,eye' }}"></i> 
+                                {{ voiture.est_disponible|yesno:'Détails,Consulter' }}
+                            </a>
+                            
+                            <!-- Bouton de réservation -->
+                            <a href="{% if voiture.est_disponible %}{% url 'reserver_voiture' voiture_id=voiture.id %}{% else %}#{% endif %}" 
+                               class="btn btn-{{ voiture.est_disponible|yesno:'primary,secondary' }} btn-sm flex-grow-1 reserve-btn" 
+                               id="reserve-btn-{{ voiture.id }}"
+                               {% if not user.is_authenticated or user.user_type != 'LOUEUR' or not voiture.est_disponible %}disabled{% endif %}>
+                                <i class="bi bi-{{ voiture.est_disponible|yesno:'calendar-plus,clock' }}"></i> 
+                                {{ voiture.est_disponible|yesno:'Réserver,Indisponible' }}
+                            </a>
+                        </div>
+                        
+                        {% if not user.is_authenticated and voiture.est_disponible %}
+                        <div class="alert alert-warning mt-2 mb-0 py-1 small">
+                            <i class="bi bi-exclamation-triangle"></i> Connectez-vous pour réserver
+                        </div>
+                        {% elif user.user_type != 'LOUEUR' and voiture.est_disponible %}
+                        <div class="alert alert-warning mt-2 mb-0 py-1 small">
+                            <i class="bi bi-exclamation-triangle"></i> Réservations réservées aux loueurs
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-4">
+                <i class="bi bi-exclamation-circle-fill display-5 text-info mb-3"></i>  
+                <h4>Aucun véhicule ne correspond à votre recherche</h4>
+                <p class="mb-3">Essayez d'élargir vos critères de recherche</p>
+                <a href="{% url 'recherche' %}" class="btn btn-info">
+                    <i class="bi bi-arrow-left"></i> Nouvelle recherche
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Pagination" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if ville %}&ville={{ ville }}{% endif %}{% if prix_max %}&prix_max={{ prix_max }}{% endif %}{% if type_vehicule %}&type_vehicule={{ type_vehicule }}{% endif %}">
+                        <i class="bi bi-chevron-double-left"></i> Première
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if ville %}&ville={{ ville }}{% endif %}{% if prix_max %}&prix_max={{ prix_max }}{% endif %}{% if type_vehicule %}&type_vehicule={{ type_vehicule }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i> Précédent
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if ville %}&ville={{ ville }}{% endif %}{% if prix_max %}&prix_max={{ prix_max }}{% endif %}{% if type_vehicule %}&type_vehicule={{ type_vehicule }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if ville %}&ville={{ ville }}{% endif %}{% if prix_max %}&prix_max={{ prix_max }}{% endif %}{% if type_vehicule %}&type_vehicule={{ type_vehicule }}{% endif %}">
+                        Suivant <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if ville %}&ville={{ ville }}{% endif %}{% if prix_max %}&prix_max={{ prix_max }}{% endif %}{% if type_vehicule %}&type_vehicule={{ type_vehicule }}{% endif %}">
+                        Dernière <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+        <div class="text-center text-muted small mt-2">
+            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }} • {{ page_obj.paginator.count }} résultats
+        </div>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation des tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Animation des cartes
+    document.querySelectorAll('.hover-effect').forEach(card => {
+        card.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
+        
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+            this.style.boxShadow = '';
+        });
+    });
+    
+    // Gestion des boutons de réservation
+    document.querySelectorAll('.reserve-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (this.disabled) {
+                e.preventDefault();
+                return false;
+            }
+            console.log('Tentative de réservation pour la voiture ID:', this.id.replace('reserve-btn-', ''));
+            window.location.href = this.href;
+        });
+    });
+    
+    // Bouton de réinitialisation de recherche
+    document.getElementById('refresh-search').addEventListener('click', function() {
+        window.location.href = "{% url 'recherche' %}";
+    });
+    
+    // Formatage des prix
+    document.querySelectorAll('.price').forEach(priceElement => {
+        const price = parseFloat(priceElement.dataset.price || priceElement.textContent);
+        priceElement.textContent = new Intl.NumberFormat('fr-FR').format(price);
+    });
+});
+</script>
+{% endblock %}

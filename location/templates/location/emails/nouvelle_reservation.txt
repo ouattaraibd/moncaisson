@@ -1,0 +1,22 @@
+Bonjour {{ proprietaire.get_full_name }},
+
+Une nouvelle réservation a été effectuée pour votre véhicule :
+
+Détails de la réservation :
+------------------------------
+• Véhicule: {{ reservation.voiture.marque }} {{ reservation.voiture.modele }} ({{ reservation.voiture.immatriculation }})
+• Client: {{ reservation.client.get_full_name }} ({{ reservation.client.phone }})
+• Période: du {{ reservation.date_debut|date:"d/m/Y" }} au {{ reservation.date_fin|date:"d/m/Y" }} ({{ reservation.duree }} jours)
+• Montant total: {{ reservation.montant_total|floatformat:0 }} XOF
+• Commission: {{ reservation.commission_proprietaire }}% ({{ reservation.montant_proprietaire|floatformat:0 }} XOF)
+
+Actions requises :
+-----------------
+1. Vérifiez la disponibilité du véhicule
+2. Préparez le véhicule pour la date de début
+3. Confirmez la réservation via votre espace propriétaire
+
+Accédez à votre espace : {{ site_url }}
+
+Cordialement,
+L'équipe {{ site_name }}

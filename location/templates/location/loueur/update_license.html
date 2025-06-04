@@ -1,0 +1,57 @@
+{% extends "location/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-id-card me-2"></i> Mettre à jour mon permis</h2>
+        <a href="{% url 'loueur_dashboard' %}" class="btn btn-outline-orange">
+            <i class="fas fa-arrow-left me-1"></i> Retour
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <button type="submit" class="btn btn-orange">
+                        <i class="fas fa-save me-1"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if user.loueur_profile.driving_license %}
+    <div class="alert alert-info mt-4">
+        <i class="fas fa-info-circle me-2"></i>
+        Votre permis actuel : <strong>{{ user.loueur_profile.driving_license }}</strong>
+        {% if user.loueur_profile.license_expiry %}
+            (expire le {{ user.loueur_profile.license_expiry|date:"d/m/Y" }})
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation de la date d'expiration
+    const expiryField = document.querySelector('#id_license_expiry');
+    if (expiryField) {
+        expiryField.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            if (selectedDate < today) {
+                alert('La date d\'expiration ne peut pas être dans le passé');
+                this.value = '';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

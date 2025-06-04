@@ -1,0 +1,182 @@
+{% extends 'location/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-orange text-white">
+                    <h4 class="mb-0">Modifier mon profil</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Aperçu de la photo de profil -->
+                        <div class="text-center mb-4">
+                            <div class="profile-picture mx-auto">
+                                <img src="{{ user.photo.url|default:'/static/location/images/default-profile.png' }}" 
+                                     alt="Photo de profil de {{ user.get_full_name|default:user.username }}"
+                                     class="img-thumbnail rounded-circle"
+                                     width="150"
+                                     height="150"
+                                     id="profile-picture-preview">
+                            </div>
+                            <small class="text-muted">Aperçu de votre photo de profil</small>
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">Prénom</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.first_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Nom</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.last_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.email.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label">Téléphone</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.phone.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.city.id_for_label }}" class="form-label">Ville</label>
+                            {{ form.city }}
+                            {% if form.city.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.city.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Champ photo avec prévisualisation -->
+                        <div class="mb-4">
+                            <label for="{{ form.photo.id_for_label }}" class="form-label">Changer la photo de profil</label>
+                            <div class="input-group">
+                                {{ form.photo }}
+                                <button class="btn btn-outline-secondary" type="button" id="reset-photo">
+                                    <i class="fas fa-times"></i> Effacer
+                                </button>
+                            </div>
+                            {% if form.photo.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.photo.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Formats acceptés : JPG, PNG. Taille max : 2MB
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-orange">
+                                <i class="fas fa-save me-1"></i> Enregistrer les modifications
+                            </button>
+                            <a href="{% url 'proprietaire_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript pour la prévisualisation de l'image -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const photoInput = document.querySelector('#{{ form.photo.id_for_label }}');
+    const previewImg = document.getElementById('profile-picture-preview');
+    const resetBtn = document.getElementById('reset-photo');
+    
+    // Prévisualisation quand une nouvelle image est sélectionnée
+    photoInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    // Bouton pour effacer la sélection
+    resetBtn.addEventListener('click', function() {
+        photoInput.value = '';
+        previewImg.src = "{% static 'location/images/default-profile.png' %}";
+    });
+});
+</script>
+
+<style>
+.profile-picture {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 1rem;
+    border: 3px solid #f8f9fa;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.profile-picture img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+#profile-picture-preview {
+    transition: all 0.3s ease;
+}
+
+#profile-picture-preview:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-orange {
+    background-color: #fd7e14;
+    color: white;
+    border-color: #fd7e14;
+}
+
+.btn-orange:hover {
+    background-color: #e67312;
+    border-color: #e67312;
+}
+</style>
+{% endblock %}
