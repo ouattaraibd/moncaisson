@@ -1,0 +1,21 @@
+{
+  "name": "MonCaisson",
+  "short_name": "MonCaisson",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#fd7e14",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/location/images/logo-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/location/images/logo-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
