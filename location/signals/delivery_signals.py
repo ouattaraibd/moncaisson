@@ -34,3 +34,4 @@ def handle_delivery_request(sender, instance, created, **kwargs):
         
     except Exception as e:
         logger.error(f"Erreur création livraison: {str(e)}", exc_info=True)
+

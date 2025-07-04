@@ -26,3 +26,4 @@ class DeliveryRequestSerializer(serializers.ModelSerializer):
         if data['option'].is_active is False:
             raise serializers.ValidationError("Cette option de livraison n'est plus disponible")
         return data
+

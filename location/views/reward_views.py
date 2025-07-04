@@ -153,3 +153,4 @@ class ClaimRewardView(LoginRequiredMixin, View):
         except Reward.DoesNotExist:
             messages.error(request, "Récompense introuvable")
             return redirect('rewards_list')
+

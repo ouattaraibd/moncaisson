@@ -1,3 +1,4 @@
+import os
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -87,6 +88,7 @@ class ReservationViewsTest(TestCase):
         # Création des utilisateurs
         self.proprietaire = get_user_model().objects.create_user(
             username='proprio',
+            email='test@example.com',
             password='testpass',
             user_type='PROPRIETAIRE',
             phone='+2250100000000',
@@ -95,6 +97,7 @@ class ReservationViewsTest(TestCase):
         
         self.loueur = get_user_model().objects.create_user(
             username='loueur',
+            email='test@example.com',
             password='testpass',
             user_type='LOUEUR',
             phone='+2250700000000',
@@ -179,6 +182,7 @@ class PaymentViewsTest(TestCase):
         # Création des utilisateurs
         self.proprietaire = get_user_model().objects.create_user(
             username='proprio',
+            email='test@example.com',
             password='testpass',
             user_type='PROPRIETAIRE',
             phone='+2250100000000',
@@ -187,6 +191,7 @@ class PaymentViewsTest(TestCase):
         
         self.loueur = get_user_model().objects.create_user(
             username='loueur',
+            email='test@example.com',
             password='testpass',
             user_type='LOUEUR',
             phone='+2250700000000',
@@ -247,6 +252,7 @@ class PaymentViewsTest(TestCase):
         """Teste l'accès à la vue de paiement par un utilisateur non autorisé"""
         other_user = get_user_model().objects.create_user(
             username='otheruser',
+            email='test@example.com',
             password='testpass',
             user_type='LOUEUR',
             phone='+2250500000000',
@@ -276,4 +282,5 @@ class PaymentViewsTest(TestCase):
         self.assertTemplateUsed(response, 'paiement/confirmation_paiement.html')
         self.assertEqual(response.context['paiement'], paiement)
         
+
 

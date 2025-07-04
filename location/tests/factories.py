@@ -1,3 +1,4 @@
+import os                          
 import factory
 from django.contrib.auth import get_user_model
 from location.models.core_models import Voiture, User
@@ -37,3 +38,4 @@ class VoitureFactory(factory.django.DjangoModelFactory):
     caution_amount = 0
     ville = 'Paris'
     proprietaire = factory.SubFactory(UserFactory)
+

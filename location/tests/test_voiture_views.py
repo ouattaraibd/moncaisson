@@ -1,4 +1,5 @@
 # location/tests/test_voiture_views.py
+import os
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -7,6 +8,10 @@ from location.models.core_models import User, Voiture, Favoris
 User = get_user_model()
 
 class VoitureViewsTest(TestCase):
+    def tearDown(self):
+        User.objects.all().delete()
+        Voiture.objects.all().delete()
+        
     def setUp(self):
         self.client = Client()
         
@@ -14,13 +19,13 @@ class VoitureViewsTest(TestCase):
         self.proprietaire = User.objects.create_user(
             username='testuser',
             email='proprio@example.com',
-            password='testpass123',
+            password=os.getenv('TEST_PWD'),
             user_type='PROPRIETAIRE'
         )
         self.loueur = User.objects.create_user(
             username='testuser',
             email='loueur@example.com',
-            password='testpass123',
+            password=os.getenv('TEST_PWD'),
             user_type='LOUEUR'
         )
         
@@ -61,7 +66,7 @@ class VoitureViewsTest(TestCase):
         self.assertContains(response, 'Toyota Corolla')
         
     def test_ajouter_favoris(self):
-        self.client.login(email='loueur@example.com', password='testpass123')
+        self.client.login(email='loueur@example.com', password=os.getenv('TEST_PWD'))
         
         url = reverse('ajouter_favoris', args=[self.voiture1.id])
         response = self.client.get(url)
@@ -79,7 +84,7 @@ class VoitureViewsTest(TestCase):
         self.assertIn("ajouté aux favoris", str(messages[0]))
         
     def test_ajouter_voiture_proprietaire(self):
-        self.client.login(email='proprio@example.com', password='testpass123')
+        self.client.login(email='proprio@example.com', password=os.getenv('TEST_PWD'))
         
         url = reverse('ajouter_voiture')
         
@@ -106,3 +111,4 @@ class VoitureViewsTest(TestCase):
         voiture = Voiture.objects.filter(marque='Renault').first()
         self.assertIsNotNone(voiture)
         self.assertEqual(voiture.proprietaire, self.proprietaire)
+

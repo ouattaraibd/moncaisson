@@ -1,3 +1,4 @@
+import os
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -8,6 +9,11 @@ import datetime
 User = get_user_model()
 
 class PaymentWorkflowTest(TestCase):
+    def tearDown(self):
+        User.objects.all().delete()
+        Voiture.objects.all().delete()
+        Paiement.objects.all().delete()
+        
     def setUp(self):
         self.client = Client()
         
@@ -15,7 +21,7 @@ class PaymentWorkflowTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@user.com',
-            password='testpass123',
+            password=os.getenv('TEST_PWD'),
             user_type='LOUEUR'
         )
         
@@ -70,7 +76,7 @@ class PaymentWorkflowTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @patch('requests.post')
+    @patch('requests.post', timeout=10)
     def test_orange_money_flow(self, mock_post):
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {
@@ -84,3 +90,4 @@ class PaymentWorkflowTest(TestCase):
             follow=True
         )
         self.assertEqual(response.status_code, 200)
+

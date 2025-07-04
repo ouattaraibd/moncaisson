@@ -1,3 +1,4 @@
+import os
 from django.test import TestCase
 from django.contrib.auth.models import Permission
 from django.contrib.auth import get_user_model
@@ -6,6 +7,7 @@ from ..models import Portefeuille, Transaction
 class TransactionTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
+            email='admin@example.com',
             username='admin',
             password='testpass',
             user_type='ADMIN'
@@ -15,6 +17,7 @@ class TransactionTests(TestCase):
         
         self.client_user = get_user_model().objects.create_user(
             username='client',
+            email='test@example.com',
             password='testpass',
             user_type='LOUEUR'
         )
@@ -48,3 +51,4 @@ class TransactionTests(TestCase):
         self.transaction.refresh_from_db()
         self.assertEqual(self.transaction.statut, 'rejete')
         self.assertEqual(self.portefeuille.solde, 1000000)
+

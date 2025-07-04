@@ -16,6 +16,7 @@ from datetime import datetime, date
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 from django.utils import timezone
+from django.utils.html import escape
 import json
 from location.models.core_models import Voiture, Reservation, DocumentVerification, Favoris, ProprietaireProfile, DrivingHistory
 from ..services.trust_service import TrustService
@@ -65,7 +66,7 @@ def proprietaire_dashboard(request):
             f"Documents manquants requis: {', '.join(missing_docs)}. "
             f"<a href='{reverse('upload_documents')}' class='alert-link'>Cliquez ici pour les ajouter</a>"
         )
-        messages.warning(request, mark_safe(warning_msg))
+        messages.warning(request, escape(warning_msg))
         logger.info(f"Documents manquants alertés pour user {request.user.id}: {missing_docs}")
 
     try:
@@ -419,3 +420,4 @@ def user_profile(request):
         'trust_metrics': trust_data['metrics']
     }
     return render(request, 'dashboard/profile.html', context)
+

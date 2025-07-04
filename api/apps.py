@@ -10,3 +10,4 @@ class ApiConfig(AppConfig):
         from django.apps import apps
         if apps.ready:
             from . import signals  # Si vous avez des signaux
+

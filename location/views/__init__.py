@@ -7,5 +7,11 @@ from .verification_views import *
 from .evaluation_views import *
 #from .admin_dashboard import super_dashboard, validate_content#
 
-   
+# Rate limit settings
+DEFAULT_RATE_LIMITS = {
+    'auth': '5/m',
+    'payments': '3/m', 
+    'api': '10/m'
+}  
     
+

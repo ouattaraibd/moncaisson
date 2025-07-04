@@ -95,3 +95,4 @@ def generate_message_id():
     """Génère un ID unique pour le message"""
     import uuid
     return str(uuid.uuid4())
+

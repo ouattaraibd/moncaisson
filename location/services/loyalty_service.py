@@ -206,3 +206,4 @@ class LoyaltyService:
             user_rewards__user=user,
             user_rewards__is_used=False
         )
+

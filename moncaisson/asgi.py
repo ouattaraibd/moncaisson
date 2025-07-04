@@ -23,3 +23,6 @@ application = ProtocolTypeRouter({
         )
     ),
 })
+
+ASGI_APPLICATION = 'moncaisson.asgi.application'
+

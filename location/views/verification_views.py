@@ -70,3 +70,4 @@ def upload_documents(request):
         'form': form,
         'missing_docs': not (profile.assurance_document and profile.carte_grise_document)
     })
+

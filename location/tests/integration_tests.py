@@ -1,4 +1,5 @@
 # location/tests/integration_tests.py
+import os
 from django.test import TestCase
 from django.urls import reverse
 from location.models import User, Voiture, Reservation
@@ -7,12 +8,14 @@ class ReservationFlowTest(TestCase):
     def test_complete_reservation_flow(self):
         # 1. Création utilisateur et voiture
         user = User.objects.create_user(
-            username='loueur',
-            password='testpass',
+            email='test@example.com',
+            username='testuser',  # Ajout du username obligatoire
+            password='password123',
             user_type='LOUEUR',
             phone='+2250102030405'
         )
         proprio = User.objects.create_user(
+            email='test@example.com',
             username='proprio',
             password='testpass',
             user_type='PROPRIETAIRE'
@@ -40,3 +43,4 @@ class ReservationFlowTest(TestCase):
         reservation = Reservation.objects.first()
         self.assertEqual(reservation.voiture, voiture)
         self.assertEqual(reservation.client, user)
+

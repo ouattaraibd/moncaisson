@@ -72,3 +72,4 @@ def evaluer_loueur(request, reservation_id):
         'form': form,
         'reservation': reservation
     })
+

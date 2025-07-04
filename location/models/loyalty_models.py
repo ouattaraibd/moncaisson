@@ -303,3 +303,4 @@ class MessageReward(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     points_earned = models.PositiveIntegerField(default=5)
     reason = models.CharField(max_length=100)  # "Premier message", etc.
+

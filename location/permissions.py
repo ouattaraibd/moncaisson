@@ -73,3 +73,4 @@ class IsOwnerOrAdmin(permissions.BasePermission):
             return obj.user == request.user
         
         return False
+

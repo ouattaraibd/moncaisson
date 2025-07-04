@@ -11,6 +11,7 @@ from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.urls import reverse
 from location.models.core_models import Voiture, Favoris
 from location.forms import VoitureForm, AdvancedSearchForm
 from django.contrib.auth.decorators import login_required
@@ -292,3 +293,4 @@ def retirer_favoris(request, pk):
 def liste_favoris(request):
     favoris = Favoris.objects.filter(utilisateur=request.user).select_related('voiture')
     return render(request, 'location/favoris/list.html', {'favoris': favoris})
+

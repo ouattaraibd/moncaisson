@@ -33,7 +33,7 @@ class DeliveryAPITest(APITestCase):
         # Création des utilisateurs
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123',
+            password=os.getenv('TEST_PWD'),
             user_type='LOUEUR',
             phone='+2250700000000',
             city='Abidjan'
@@ -243,3 +243,4 @@ class DeliveryAPITest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(DeliveryRequest.objects.count(), 0)
+

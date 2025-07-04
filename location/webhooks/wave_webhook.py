@@ -46,3 +46,4 @@ def wave_webhook(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     
     return JsonResponse({'status': 'error', 'message': 'Méthode non autorisée'}, status=405)
+

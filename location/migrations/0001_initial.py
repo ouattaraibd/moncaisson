@@ -669,3 +669,4 @@ class Migration(migrations.Migration):
             unique_together={('voiture', 'client', 'reservation')},
         ),
     ]
+

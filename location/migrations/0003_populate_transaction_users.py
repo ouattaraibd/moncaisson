@@ -24,3 +24,4 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(assign_users_to_transactions),
     ]
+

@@ -1,0 +1,57 @@
+{% extends "location/base.html" %}
+
+{% block title %}Erreur serveur - MonCaisson{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto text-center">
+            <div class="error-content">
+                <h1 class="display-1 text-danger">500</h1>
+                <h2><i class="fas fa-server"></i> Erreur serveur</h2>
+                <p class="lead">
+                    Une erreur technique s'est produite. Notre équipe a été notifiée.
+                </p>
+                <div class="alert alert-warning mt-4">
+                    <p class="mb-0">
+                        Vous pouvez réessayer plus tard ou nous contacter si le problème persiste.
+                    </p>
+                </div>
+                <div class="error-actions mt-4">
+                    <a href="{% url 'accueil' %}" class="btn btn-primary btn-lg mr-3">
+                        <i class="fas fa-home"></i> Retour à l'accueil
+                    </a>
+                    <a href="{% url 'contact' %}" class="btn btn-outline-danger btn-lg">
+                        <i class="fas fa-bug"></i> Signaler un problème
+                    </a>
+                </div>
+                {% if request.user.is_staff %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h5>Information technique (visible par les admins)</h5>
+                    <p class="mb-1"><strong>Heure :</strong> {% now "H:i:s" %}</p>
+                    <p class="mb-1"><strong>URL :</strong> {{ request.path }}</p>
+                    <p class="mb-0"><strong>Utilisateur :</strong> {{ request.user.username|default:"Anonyme" }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-content {
+        padding: 60px 0;
+    }
+    .display-1 {
+        font-size: 10rem;
+        line-height: 1;
+        margin-bottom: 20px;
+    }
+    .alert-warning {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}

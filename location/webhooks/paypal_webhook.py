@@ -69,3 +69,4 @@ def get_paypal_auth_token():
         headers={'Accept': 'application/json'}
     )
     return response.json().get('access_token')
+

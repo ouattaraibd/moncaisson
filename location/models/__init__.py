@@ -21,6 +21,7 @@ from .loyalty_models import Reward, UserReward, LoyaltyProfile  # Import unique 
 from .delivery_models import DeliveryOption, DeliveryRequest
 from .policy_models import Policy, PolicyAcceptance
 from .messaging_models import Message, Conversation, MessageAttachment, ConversationArchive
+from .security import IPScore
 
 __all__ = [
     'User',
@@ -47,5 +48,7 @@ __all__ = [
     'Message',
     'Conversation', 
     'MessageAttachment',
-    'ConversationArchive'
+    'ConversationArchive',
+    'IPScore'
 ]
+

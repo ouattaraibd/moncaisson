@@ -31,3 +31,4 @@ class CurrencyMiddleware(MiddlewareMixin):
             'EUR': 655.957,
             'USD': 600.50
         }
+

@@ -122,3 +122,4 @@ def disconnect_messaging_signals():
             logger.warning(f"Échec déconnexion signal: {e}")
 
     logger.info("Signaux de messagerie déconnectés")
+

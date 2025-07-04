@@ -17,3 +17,4 @@ def handle_caution(sender, instance, **kwargs):
         # Annuler et rembourser la caution
         instance.caution_status = 'refunded'
         instance.save()
+

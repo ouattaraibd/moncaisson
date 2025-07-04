@@ -9,7 +9,8 @@ class OrangeMoneyCI:
         response = requests.post(
             "https://api.orange.com/oauth/v2/token",
             auth=(settings.OM_CLIENT_ID, settings.OM_CLIENT_SECRET),
-            data={"grant_type": "client_credentials"}
+            data={"grant_type": "client_credentials"},
+            timeout=10  # Ajouter un timeout de 10 secondes
         )
         return response.json()['access_token']
 
@@ -32,6 +33,8 @@ class OrangeMoneyCI:
         response = requests.post(
             "https://api.orange.com/orange-money-webpay/ci/v1/webpayment",
             json=payload,
-            headers=headers
+            headers=headers,
+            timeout=10
         )
         return response.json()['payment_url']  # Redirigez l'utilisateur ici
+

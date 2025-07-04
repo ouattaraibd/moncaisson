@@ -135,7 +135,7 @@ def initier_paiement(request):
             "customer_name": request.user.username,
             "customer_phone": telephone
         }
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload), timeout=10)
         return redirect(response.json()['payment_url'])
         
 @login_required
@@ -573,3 +573,4 @@ class RechercheVoitures(ListView):
         context['prix_max'] = self.request.GET.get('prix_max', '')
         context['type_vehicule'] = self.request.GET.get('type_vehicule', '')
         return context
+

@@ -30,3 +30,4 @@ class PolicyAcceptanceMiddleware(MiddlewareMixin):
                 return redirect('policy_acceptance', 
                     policy_id=policy.id,
                     next=request.path_info)
+

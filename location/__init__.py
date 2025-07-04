@@ -1,1 +1,1 @@
-default_app_config = 'location.apps.LocationConfig'
+default_app_config = 'moncaisson.location.apps.LocationConfig'

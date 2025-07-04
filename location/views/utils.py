@@ -54,3 +54,4 @@ def verifier_disponibilite(voiture_id, date_debut, date_fin, exclude_reservation
     except Exception as e:
         from django.core.exceptions import ImproperlyConfigured
         raise ImproperlyConfigured(f"Erreur de vérification de disponibilité: {str(e)}")
+

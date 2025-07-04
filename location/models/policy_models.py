@@ -97,3 +97,4 @@ class MessagingPolicy(models.Model):
     def __str__(self):
         return f"Politique de messagerie #{self.id}"
         
+

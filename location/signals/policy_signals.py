@@ -23,8 +23,9 @@ def handle_policy_assignment(sender, instance, created, **kwargs):
             PolicyAcceptance.objects.create(
                 user=instance,
                 policy=policy,
-                ip_address='0.0.0.0'
+                ip_address=request.META.get('REMOTE_ADDR')
             )
             
     except Exception as e:
         logger.error(f"Policy assignment failed: {e}", exc_info=True)
+

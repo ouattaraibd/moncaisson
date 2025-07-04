@@ -48,3 +48,4 @@ def stripe_webhook(request):
         logger.warning(f"Paiement Stripe échoué: {transaction_id}")
 
     return HttpResponse(status=200)
+

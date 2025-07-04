@@ -116,3 +116,4 @@ class Migration(migrations.Migration):
             field=models.CharField(choices=[('depot', 'Dépôt'), ('retrait', 'Retrait'), ('virement', 'Virement'), ('paiement', 'Paiement reçu'), ('paiement_service', 'Paiement pour service'), ('remboursement', 'Remboursement')], max_length=20),
         ),
     ]
+

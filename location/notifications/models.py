@@ -67,3 +67,4 @@ class Notification(models.Model):
             category=category,
             link=link
         )
+

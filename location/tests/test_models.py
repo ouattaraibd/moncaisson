@@ -1,4 +1,5 @@
 # location/tests/test_models.py
+import os
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -11,9 +12,13 @@ import tempfile
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 class UserModelTest(TestCase):
+    def tearDown(self):
+        User.objects.all().delete()
+        
     def test_create_user(self):
         user = User.objects.create_user(
             email='test@example.com',
+            username='testuser',
             password='password123',
             first_name='John',
             last_name='Doe',
@@ -29,6 +34,7 @@ class UserModelTest(TestCase):
     def test_create_superuser(self):
         admin = User.objects.create_superuser(
             email='admin@example.com',
+            username='admin',
             password='admin123'
         )
         self.assertEqual(admin.user_type, 'ADMIN')
@@ -48,6 +54,7 @@ class ProprietaireProfileTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email='proprio@example.com',
+            username='testuser',
             password='test123',
             user_type='PROPRIETAIRE'
         )
@@ -75,9 +82,14 @@ class ProprietaireProfileTest(TestCase):
             profile.clean()
 
 class VoitureModelTest(TestCase):
+    def tearDown(self):
+        User.objects.all().delete()
+        Voiture.objects.all().delete()
+        
     def setUp(self):
         self.proprietaire = User.objects.create_user(
             email='proprio@example.com',
+            username='testuser',
             password='test123',
             user_type='PROPRIETAIRE'
         )
@@ -108,14 +120,19 @@ class VoitureModelTest(TestCase):
             voiture.clean()
 
 class ReservationModelTest(TestCase):
+    def tearDown(self):
+        User.objects.all().delete()
+        
     def setUp(self):
         self.proprietaire = User.objects.create_user(
-            email='proprio@example.com',
+            email='proprio@example.com'
+            username='testuser',
             password='test123',
             user_type='PROPRIETAIRE'
         )
         self.loueur = User.objects.create_user(
             email='loueur@example.com',
+            username='testuser',
             password='test123',
             user_type='LOUEUR'
         )
@@ -152,14 +169,19 @@ class ReservationModelTest(TestCase):
             reservation.clean()
 
 class PaiementModelTest(TestCase):
+    def tearDown(self):
+        User.objects.all().delete()
+        
     def setUp(self):
         self.proprietaire = User.objects.create_user(
             email='proprio@example.com',
+            username='testuser',
             password='test123',
             user_type='PROPRIETAIRE'
         )
         self.loueur = User.objects.create_user(
             email='loueur@example.com',
+            username='testuser',
             password='test123',
             user_type='LOUEUR'
         )
@@ -201,9 +223,13 @@ class PaiementModelTest(TestCase):
         self.assertGreater(paiement.montant_converti, 50000)  # 1 USD > 500 XOF
 
 class PortefeuilleModelTest(TestCase):
+    def tearDown(self):
+        User.objects.all().delete()
+        
     def setUp(self):
         self.user = User.objects.create_user(
             email='user@example.com',
+            username='testuser',
             password='test123',
             user_type='LOUEUR'
         )
@@ -225,3 +251,4 @@ class PortefeuilleModelTest(TestCase):
         portefeuille = Portefeuille.objects.create(proprietaire=self.user, solde=1000)
         with self.assertRaises(ValueError):
             portefeuille.debiter(2000, "Retrait")
+

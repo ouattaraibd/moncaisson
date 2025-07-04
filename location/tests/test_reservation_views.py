@@ -1,4 +1,5 @@
 # location/tests/test_reservation_views.py
+import os
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -8,6 +9,11 @@ from location.models.core_models import User, Voiture, Reservation
 User = get_user_model()
 
 class ReservationViewsTest(TestCase):
+    def tearDown(self):
+        User.objects.all().delete()
+        Voiture.objects.all().delete()
+        Reservation.objects.all().delete()
+        
     def setUp(self):
         self.client = Client()
         self.today = timezone.now().date()
@@ -16,13 +22,13 @@ class ReservationViewsTest(TestCase):
         self.proprietaire = User.objects.create_user(
             username='testuser',
             email='proprio@example.com',
-            password='testpass123',
+            password=os.getenv('TEST_PWD'),
             user_type='PROPRIETAIRE'
         )
         self.loueur = User.objects.create_user(
             username='testuser',
             email='loueur@example.com',
-            password='testpass123',
+            password=os.getenv('TEST_PWD'),
             user_type='LOUEUR'
         )
         
@@ -37,7 +43,7 @@ class ReservationViewsTest(TestCase):
         )
         
         # Connexion du loueur
-        self.client.login(email='loueur@example.com', password='testpass123')
+        self.client.login(email='loueur@example.com', password=os.getenv('TEST_PWD'))
         
     def test_reserver_voiture(self):
         url = reverse('reserver_voiture', args=[self.voiture.id])
@@ -91,3 +97,4 @@ class ReservationViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['reservations']), 1)
         self.assertContains(response, 'Toyota Corolla')
+

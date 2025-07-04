@@ -12,3 +12,4 @@ def create_reservation_notification(sender, instance, created, **kwargs):
         )
 
 post_save.connect(create_reservation_notification, sender=Reservation)
+

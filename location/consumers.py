@@ -106,3 +106,4 @@ class ChatbotConsumer(AsyncWebsocketConsumer):
         # Ici vous pourriez faire un vrai appel à votre modèle Voiture
         # Par exemple: Voiture.objects.filter(disponible=True)
         return "Nous avons actuellement 3 voitures disponibles :\n- Peugeot 208\n- Toyota Yaris\n- Renault Clio"
+

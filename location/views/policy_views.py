@@ -79,3 +79,4 @@ class PolicyAcceptanceView(LoginRequiredMixin, FormView):
         else:
             ip = self.request.META.get('REMOTE_ADDR')
         return ip
+

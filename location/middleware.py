@@ -205,3 +205,4 @@ class AdminAccessMiddleware:
             if not request.user.is_authenticated or not request.user.is_staff:
                 return redirect('/admin/login/?next=' + request.path)
         return self.get_response(request)
+

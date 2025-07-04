@@ -2,6 +2,8 @@ import logging
 import os
 from location.models import Reservation
 from django.views.decorators.csrf import csrf_exempt
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 from django.shortcuts import render, redirect, get_object_or_404
 from location.services.currency_service import CurrencyService
@@ -112,26 +114,6 @@ def choisir_methode_paiement(request, reservation_id):
     return render(request, 'location/paiement/choisir_methode.html', context)
 
 @login_required
-def initier_paiement(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, client=request.user)
-    payment_method = request.POST.get('payment_method')
-
-    try:
-        if payment_method == 'carte':
-            return initier_paiement_carte(request, reservation)
-        elif payment_method == 'orange':
-            return initier_orange_money(request, reservation)
-        elif payment_method == 'wave':
-            return initier_wave(request, reservation)
-        else:
-            messages.error(request, "Méthode de paiement non valide")
-            return redirect('choisir_methode_paiement', reservation_id=reservation.id)
-            
-    except Exception as e:
-        logger.error(f"Erreur initialisation paiement: {str(e)}")
-        messages.error(request, f"Erreur lors du paiement: {str(e)}")
-        return redirect('recapitulatif_paiement', reservation_id=reservation.id)
-
 def initier_cinetpay(request, reservation):
     """Initialisation spécifique à CinetPay"""
     with transaction.atomic():
@@ -174,7 +156,8 @@ def initier_cinetpay(request, reservation):
         paiement.reponse_api = data
         paiement.save()
         return redirect(data['payment_url'])
-
+        
+@login_required
 def initier_orange_money(request, reservation):
     """Paiement via Orange Money"""
     try:
@@ -224,7 +207,8 @@ def initier_orange_money(request, reservation):
             
     except Exception as e:
         raise Exception(f"Erreur Orange Money: {str(e)}")
-
+        
+@login_required
 def initier_wave(request, reservation):
     """Initialisation Wave"""
     with transaction.atomic():
@@ -266,7 +250,8 @@ def initier_wave(request, reservation):
             return redirect(data['url'])
         else:
             raise Exception("Wave n'a pas retourné d'URL de paiement")
-
+            
+@login_required
 def initier_paypal(request, reservation):
     """Initialisation PayPal"""
     with transaction.atomic():
@@ -319,6 +304,7 @@ def initier_paypal(request, reservation):
         
         raise Exception("PayPal n'a pas retourné d'URL d'approbation")
 
+@login_required
 def initier_paiement(request, reservation_id):
     """
     Vue pour initier un paiement avec gestion multi-devises
@@ -360,7 +346,7 @@ def initier_paiement(request, reservation_id):
 
 def _handle_payment_post(request, reservation, context):
     """Gère la soumission du formulaire de paiement"""
-    form = PaymentForm(request.POST)
+    form = PaiementForm(request.POST)
     
     if not form.is_valid():
         context['form'] = form
@@ -417,7 +403,7 @@ def _handle_payment_get(request, reservation, context):
         devise = 'XOF'
 
     context.update({
-        'form': PaymentForm(initial={
+        'form': PaiementForm(initial={
             'methode': 'STRIPE',  # Méthode par défaut
             'devise': devise
         }),
@@ -507,13 +493,15 @@ def stripe_webhook(request):
 
 @csrf_exempt
 def notification_paiement(request):
-    """
-    Endpoint de notification CinetPay
-    """
+    """Notification CinetPay"""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            transaction_id = data['transaction_id']
+            transaction_id = data.get('txnid')
+            
+            # Validation de l'entrée
+            if not transaction_id:
+                return JsonResponse({'status': 'error', 'message': 'txnid manquant'}, status=400)
             
             # Vérification avec CinetPay
             verification_url = "https://api.cinetpay.com/v2/payment/check"
@@ -523,8 +511,17 @@ def notification_paiement(request):
                 "transaction_id": transaction_id
             }
             
-            response = requests.post(verification_url, json=payload)
-            response.raise_for_status()
+            try:
+                response = requests.post(
+                    verification_url,
+                    json=payload,
+                    timeout=settings.REQUEST_TIMEOUT  # ← Utilisation de la constante
+                )
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Erreur vérification CinetPay: {str(e)}")
+                return JsonResponse({'status': 'error'}, status=400)
+            
             result = response.json()
             
             # Traitement du résultat
@@ -540,9 +537,10 @@ def notification_paiement(request):
             paiement.save()
             
             return JsonResponse({'status': 'success'})
-        
+            
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            logger.error(f"Erreur traitement notification: {str(e)}", exc_info=True)
+            return JsonResponse({'status': 'error'}, status=400)
 
 @login_required
 def confirmation_paiement(request, reservation_id):
@@ -1103,3 +1101,4 @@ class FacturePDFView(View):
         from django.test import RequestFactory
         request = RequestFactory().get('/')
         return self.get(request, reservation_id=1)
+

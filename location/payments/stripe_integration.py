@@ -24,3 +24,4 @@ def create_stripe_charge(amount, currency, email, token):
         from sentry_sdk import capture_message
         capture_message(f"Erreur Stripe: {e.user_message}")
         raise
+

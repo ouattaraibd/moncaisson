@@ -19,3 +19,4 @@ def initier_paiement_carte(request, reservation):
         logger.error(f"Stripe error: {str(e)}")
         messages.error(request, "Erreur lors du paiement par carte")
         return redirect('choisir_methode_paiement', reservation_id=reservation.id)
+

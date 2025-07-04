@@ -1,14 +1,15 @@
 # location/tests/test_auth_views.py
+import os
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from location.models.core_models import User, ProprietaireProfile
+import tempfile
 
 User = get_user_model()
 
 class AuthViewsTest(TestCase):
     def setUp(self):
-        self.client = Client()
         self.user_data = {
             'username': 'testuser',
             'email': 'test@example.com',
@@ -17,6 +18,8 @@ class AuthViewsTest(TestCase):
             'last_name': 'Doe',
             'phone': '+2250707070707'
         }
+        
+        self.user = User.objects.create_user(**self.user_data)
         
     def test_register_proprietaire(self):
         url = reverse('register_proprietaire')
@@ -46,7 +49,7 @@ class AuthViewsTest(TestCase):
         # Création d'un utilisateur de test
         user = User.objects.create_user(
             email='test@example.com',
-            password='testpass123'
+            password=os.getenv('TEST_PWD')
         )
         
         url = reverse('connexion')
@@ -69,16 +72,19 @@ class AuthViewsTest(TestCase):
         })
         self.assertEqual(response.status_code, 200)  # Reste sur la page
         self.assertContains(response, "Identifiants incorrects")
+        
+    def tearDown(self):
+        User.objects.all().delete()
 
 class ProprietaireViewsTest(TestCase):
     def setUp(self):
-        self.client = Client()
         self.user = User.objects.create_user(
-            email='proprio@example.com',
-            password='testpass123',
+            email='test@example.com',
+            username='testuser',  # Ajout du username obligatoire
+            password='password123',
             user_type='PROPRIETAIRE'
         )
-        self.client.login(email='proprio@example.com', password='testpass123')
+        self.client.login(username='proprio@example.com', password=os.getenv('TEST_PWD'))
         
     def test_upload_documents_view(self):
         url = reverse('upload_documents')
@@ -92,9 +98,13 @@ class ProprietaireViewsTest(TestCase):
             response = self.client.post(url, {
                 'assurance_document': tmp,
                 'carte_grise_document': tmp
-            })
+            }, format='multipart')
             self.assertEqual(response.status_code, 302)  # Redirection
             
             # Vérification de la mise à jour du profil
             profile = ProprietaireProfile.objects.get(user=self.user)
             self.assertTrue(profile.assurance_document)
+            
+    def tearDown(self):
+        User.objects.all().delete()
+

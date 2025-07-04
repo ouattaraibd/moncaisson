@@ -52,3 +52,4 @@ def check_disponibilite(request, pk):
             {'error': 'Format de date invalide. Utilisez YYYY-MM-DD'},
             status=400
         )
+

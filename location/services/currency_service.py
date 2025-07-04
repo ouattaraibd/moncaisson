@@ -176,3 +176,4 @@ class CurrencyService:
         except Exception as e:
             logger.error(f"Erreur formatage: {str(e)}")
             return f"{amount} {currency_code}"
+

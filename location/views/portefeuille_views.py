@@ -123,3 +123,4 @@ def valider_transaction(request, transaction_id):
         'transaction': transaction,
         'form': form
     })
+

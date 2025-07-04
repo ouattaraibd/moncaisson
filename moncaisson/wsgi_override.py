@@ -17,3 +17,4 @@ application = get_wsgi_application()
 if 'runserver' in sys.argv:
     from django.apps import apps
     apps.populate(apps.get_app_configs())
+

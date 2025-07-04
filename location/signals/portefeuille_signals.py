@@ -62,3 +62,4 @@ def update_portefeuille_on_transaction(sender, instance, created, **kwargs):
             instance.motif_rejet = str(e)
             instance.save()
             raise  # Pour voir l'erreur dans les logs
+

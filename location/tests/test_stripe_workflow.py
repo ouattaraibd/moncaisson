@@ -1,3 +1,4 @@
+import os
 import json
 from unittest.mock import patch
 from django.test import TestCase
@@ -9,7 +10,8 @@ class StripePaymentTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email='test@user.com',
-            password='testpass123',
+            username='testuser',
+            password=os.getenv('TEST_PWD'),
             user_type='LOUEUR'
         )
         self.voiture = Voiture.objects.create(
@@ -61,3 +63,4 @@ class StripePaymentTest(TestCase):
         # 4. Vérifier la réservation
         self.reservation.refresh_from_db()
         self.assertEqual(self.reservation.statut, 'confirme')
+

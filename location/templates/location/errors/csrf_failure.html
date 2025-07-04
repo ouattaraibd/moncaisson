@@ -1,0 +1,19 @@
+<!-- location/templates/location/errors/csrf_failure.html -->
+{% extends "location/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="alert alert-danger">
+        <h1 class="alert-heading">Erreur de sécurité</h1>
+        <p>
+            La validation de votre session a échoué (erreur CSRF).<br>
+            Raison : <strong>{{ reason }}</strong>
+        </p>
+        <hr>
+        <p class="mb-0">
+            <a href="javascript:history.back()" class="btn btn-primary">Retour</a>
+            <a href="/" class="btn btn-secondary">Accueil</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

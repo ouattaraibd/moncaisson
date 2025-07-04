@@ -1,4 +1,5 @@
 # location/tests/test_services.py
+import os
 from django.test import TestCase
 from location.models.core_models import User
 from location.services.trust_service import TrustService
@@ -8,7 +9,7 @@ class TrustServiceTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123',
+            password=os.getenv('TEST_PWD'),
             user_type='LOUEUR'
         )
         
@@ -36,3 +37,4 @@ class TrustServiceTest(TestCase):
         TrustService.update_trust_score(self.user)
         self.assertNotEqual(self.user.trust_score, initial_score)
         self.assertTrue(50 <= self.user.trust_score <= 100)
+

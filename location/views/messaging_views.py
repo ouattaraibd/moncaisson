@@ -41,3 +41,4 @@ def message_success(request, recipient_id):
     return render(request, 'location/messaging/success.html', {
         'recipient': recipient
     })
+

@@ -58,3 +58,4 @@ def orange_webhook(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     
     return JsonResponse({'status': 'error', 'message': 'Méthode non autorisée'}, status=405)
+

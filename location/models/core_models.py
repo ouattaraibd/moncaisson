@@ -1,17 +1,15 @@
 from django.db import models
 from django.db.models import Q
-from django.contrib.auth.models import User
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import MinValueValidator, RegexValidator, FileExtensionValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
 from django.utils import timezone
 from decimal import Decimal
-from django.db import models
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.db import transaction
 import uuid
 
 PHONE_VALIDATOR = RegexValidator(
@@ -19,7 +17,33 @@ PHONE_VALIDATOR = RegexValidator(
     message="Format : +225XXXXXXXX ou 0XXXXXXXX"
 )
 
+class UserManager(BaseUserManager):
+    def create_user(self, email, username, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Users must have an email address')
+        if not username:
+            raise ValueError('Users must have a username')
+            
+        email = self.normalize_email(email)
+        user = self.model(
+            email=email,
+            username=username,
+            **extra_fields
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        return self.create_user(email, username, password, **extra_fields)
+        
 class User(AbstractUser):
+    objects = UserManager()
+    
     TYPE_CHOICES = [
         ('LOUEUR', 'Loueur'),
         ('PROPRIETAIRE', 'Propriétaire'),
@@ -292,6 +316,7 @@ class ProprietaireProfile(models.Model):
     @property
     def documents_status_html(self):
         """Version HTML colorée du statut des documents"""
+        from django.utils.html import format_html
         assurance = format_html(
             '<span style="color:{}">{}</span>',
             'green' if self.assurance_document else 'red',
@@ -313,6 +338,7 @@ class ProprietaireProfile(models.Model):
 
     def get_verification_badge(self):
         """Badge coloré pour le statut de vérification"""
+        from django.utils.html import format_html
         status = self.user.verification_status
         colors = {
             'approved': ('green', '✓ Vérifié'),
@@ -500,8 +526,8 @@ class Paiement(models.Model):
     def _handle_currency_conversion(self):
         """Gère la conversion automatique des devises"""
         if not self.montant_converti or self._state.adding:
-            from location.services.currency_service import CurrencyService
             try:
+                from location.services.currency_service import CurrencyService
                 self.montant_converti = CurrencyService.convert(
                     self.montant, 
                     self.devise_origine,
@@ -670,7 +696,7 @@ class PageView(models.Model):
     ip_address = models.GenericIPAddressField()
     referrer = models.CharField(max_length=255, blank=True)
     method = models.CharField(max_length=10, default='GET')
-    status_code = models.PositiveSmallIntegerField(null=True, blank=True)  # Ajoutez ce champ
+    status_code = models.PositiveSmallIntegerField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -719,9 +745,9 @@ class Voiture(models.Model):
         verbose_name="Type de véhicule"
     )
     transmission = models.CharField(
-        max_length=1,
+        max_length=20,
         choices=TRANSMISSION_CHOICES,
-        verbose_name="Transmission"
+        default='M'
     )
     carburant = models.CharField(
         max_length=20,
@@ -738,13 +764,17 @@ class Voiture(models.Model):
         default=False
     )
     kilometrage = models.PositiveIntegerField(
-        verbose_name="Kilométrage (km)"
-    )
-    nb_places = models.PositiveSmallIntegerField(
-        verbose_name="Nombre de places"
+        verbose_name="Kilométrage (km)",
+        default=0
     )
     nb_portes = models.PositiveSmallIntegerField(
-        verbose_name="Nombre de portes"
+        verbose_name="Nombre de portes",
+        default=5  # Valeur par défaut
+    )
+    nb_places = models.PositiveSmallIntegerField(
+        verbose_name="Nombre de places",
+        default=5,  # Valeur par défaut
+        validators=[MinValueValidator(1), MaxValueValidator(20)]  # Validation
     )
     
     # Équipements
@@ -765,7 +795,7 @@ class Voiture(models.Model):
         verbose_name="Bluetooth"
     )
     disponible = models.BooleanField(
-        default=True,  # Ceci rendra les nouvelles voitures disponibles par défaut
+        default=True,
         verbose_name="Disponible"
     )
     
@@ -875,7 +905,6 @@ class Voiture(models.Model):
         
     def get_calendrier_disponibilite(self, start_date, end_date):
         """Retourne les jours indisponibles entre deux dates"""
-        from django.db.models import Q
         return self.reservations.filter(
             Q(statut='confirme') & 
             Q(date_debut__lte=end_date) & 
@@ -977,11 +1006,6 @@ class Reservation(models.Model):
         default=False,
         verbose_name="Points de fidélité attribués"
     )
-    statut = models.CharField(
-        max_length=20,
-        choices=STATUT_CHOICES,
-        default='attente'
-    )
     avec_livraison = models.BooleanField(default=False)
     adresse_livraison = models.TextField(blank=True)
 
@@ -993,7 +1017,7 @@ class Reservation(models.Model):
             models.UniqueConstraint(
                 fields=['voiture', 'date_debut', 'date_fin'],
                 name='reservation_unique',
-                condition=models.Q(statut__in=['attente', 'confirme'])
+                condition=models.Q(statut__in=['attente_paiement', 'confirme'])
             )
         ]
         permissions = [
@@ -1052,6 +1076,7 @@ class Reservation(models.Model):
         
     @montant_total.setter
     def montant_total(self, value):
+        self._montant_total = value
         self.montant_paye = value - (self.frais_service or Decimal(0))    
 
     def calculer_commissions(self):
@@ -1067,7 +1092,7 @@ class Reservation(models.Model):
         
     def save(self, *args, **kwargs):
         # Si paiement réussi mais statut pas à jour
-        if hasattr(self, 'paiement') and self.paiement.statut == 'reussi' and self.statut != 'confirme':
+        if hasattr(self, 'paiement') and self.paiement.statut == 'REUSSI' and self.statut != 'confirme':
             self.statut = 'confirme'
         super().save(*args, **kwargs)
 
@@ -1089,9 +1114,10 @@ class Reservation(models.Model):
         
     def get_status_color(self):
         status_colors = {
-            'attente': 'warning',
+            'attente_paiement': 'warning',
             'confirme': 'success',
-            'annule': 'danger'
+            'annule': 'danger',
+            'termine': 'info'
         }
         return status_colors.get(self.statut, 'secondary')
 
@@ -1285,7 +1311,7 @@ class Evaluation(models.Model):
         related_name='evaluations'
     )
     reservation = models.ForeignKey(
-        'Reservation',  # Ajoutez cette ligne
+        'Reservation',
         on_delete=models.CASCADE,
         related_name='evaluations',
         null=True,
@@ -1307,7 +1333,7 @@ class Evaluation(models.Model):
     class Meta:
         verbose_name = "Évaluation"
         verbose_name_plural = "Évaluations"
-        unique_together = ('voiture', 'client', 'reservation')  # Modifiez cette ligne
+        unique_together = ('voiture', 'client', 'reservation')
         ordering = ['-date_creation']
         
 class EvaluationLoueur(models.Model):
@@ -1423,7 +1449,7 @@ class VoiturePhoto(models.Model):
     voiture = models.ForeignKey(
         Voiture, 
         on_delete=models.CASCADE, 
-        related_name='photos'  # Ceci permet d'accéder aux photos via voiture.photos.all()
+        related_name='photos'
     )
     photo = models.ImageField(
         upload_to='voitures/photos/',
@@ -1445,7 +1471,7 @@ class VoiturePhoto(models.Model):
         
 class Portefeuille(models.Model):
     proprietaire = models.OneToOneField(
-        'User',
+        User,
         on_delete=models.CASCADE,
         related_name='portefeuille'
     )
@@ -1527,15 +1553,13 @@ class Transaction(models.Model):
         'Portefeuille', 
         on_delete=models.CASCADE, 
         related_name='transactions',
-        null=True,  # Rendons optionnel pour les transactions non liées à un portefeuille
+        null=True,
         blank=True
     )
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE,
-        related_name='transactions',
-        null=True,  # Temporairement nullable
-        blank=True
+        related_name='transactions'
     )
     montant = models.DecimalField(max_digits=15, decimal_places=2)
     currency = models.CharField(max_length=3, default='XOF')
@@ -1621,7 +1645,9 @@ class DrivingHistory(models.Model):
     class Meta:
         verbose_name = "Historique de conduite"
         verbose_name_plural = "Historiques de conduite"
-def get_caution_display(self):
-    if self.caution_required and self.caution_amount > 0:
-        return f"{self.caution_amount} XOF"
-    return "Aucune"    
+
+    def get_caution_display(self):
+        if self.caution_required and self.caution_amount > 0:
+            return f"{self.caution_amount} XOF"
+        return "Aucune"
+        

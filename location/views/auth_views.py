@@ -11,6 +11,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.forms import AuthenticationForm
 from location.models import Voiture, User, Reservation
 from decimal import Decimal
+from django.http import JsonResponse
 from django.db import transaction
 from django.utils.http import url_has_allowed_host_and_scheme
 from location.models.core_models import ProprietaireProfile, Document, DocumentVerification
@@ -29,7 +30,7 @@ def accueil(request):
     voitures = Voiture.objects.all()
     return render(request, 'location/accueil.html', {'voitures': voitures})
 
-@ratelimit(key='ip', rate='3/h', block=True)
+@ratelimit(key='ip', rate='5/m', block=True)
 @axes_dispatch
 @csrf_protect 
 @never_cache
@@ -413,3 +414,4 @@ def upload_documents(request):
     }
     
     return render(request, 'location/auth/upload_documents.html', context)
+

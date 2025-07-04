@@ -7,3 +7,4 @@ def loyalty_dashboard(request):
         'profile': profile,
         'rewards': Reward.objects.filter(is_active=True)
     })
+

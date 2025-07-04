@@ -1,9 +1,13 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.conf import settings
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
+from .views.errors import handler404, handler500, csrf_failure
+
+app_name = 'location'
 
 # Import des vues d'authentification personnalisées
 from location.views.auth_views import (
@@ -213,3 +217,12 @@ urlpatterns = [
          ),
          name='password_reset_complete'),
 ]
+
+ #Handler en mode debug
+if settings.DEBUG:
+    urlpatterns += [
+        path('403/', csrf_failure),
+        path('404/', handler404),
+        path('500/', handler500),
+    ]
+

@@ -168,3 +168,4 @@ class ConversationArchive(models.Model):
         verbose_name_plural = "Archives de conversations"
         unique_together = ('user', 'conversation')
         ordering = ['-archived_at']
+

@@ -834,3 +834,4 @@ class DocumentVerificationForm(forms.ModelForm):
         if not cleaned_data.get('driver_license') or not cleaned_data.get('id_card'):
             raise forms.ValidationError("Au moins un document véhicule (permis ou carte d'identité) est requis")
         return cleaned_data
+

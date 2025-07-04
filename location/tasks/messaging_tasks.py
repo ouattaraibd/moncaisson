@@ -2,76 +2,85 @@ from celery import shared_task
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from location.models import Message
 import logging
+from django.apps import apps
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 @shared_task(
     bind=True,
-    name='location.tasks.messaging_tasks.send_message_notification',
+    name='messaging.send_notification',
     autoretry_for=(Exception,),
     retry_backoff=60,
-    retry_kwargs={'max_retries': 3}
+    retry_kwargs={'max_retries': 3},
+    queue='notifications'
 )
-def send_message_notification(self, message_id):
+def send_message_notification(self, message_id=None):
     """
-    Tâche Celery pour envoyer des notifications par email lorsqu'un nouveau message est reçu
-    avec gestion des erreurs et réessais automatiques.
+    Tâche Celery pour envoyer des notifications par email
+    avec gestion robuste des erreurs et réessais automatiques.
     """
     try:
-        # Import différé des modèles
-        Message = self.app.get_model('location', 'Message')
+        if not message_id:
+            logger.warning("Notification envoyée sans message_id")
+            return "Aucun message_id fourni"
+
+        Message = apps.get_model('location', 'Message')
+        User = apps.get_model('location', 'User')
         
-        # Récupération optimale du message avec les relations
         message = Message.objects.select_related(
             'conversation',
             'sender'
+        ).prefetch_related(
+            'conversation__participants'
         ).get(id=message_id)
         
-        # Préparation des destinataires (exclure l'expéditeur)
         recipients = message.conversation.participants.exclude(
             id=message.sender.id
         ).only('email', 'username')
 
-        # Contexte pour les templates d'email
         context = {
-            'sender_name': message.sender.username,
+            'sender_name': message.sender.get_full_name() or message.sender.username,
             'message_preview': message.content[:100],
             'conversation_id': message.conversation.id,
-            'site_url': 'https://www.moncaisson.com'  # À adapter
+            'site_url': getattr(settings, 'SITE_URL', 'https://moncaisson.com')
         }
 
-        # Envoi des notifications
         for recipient in recipients:
             try:
-                # Préparation de l'email
-                email = EmailMultiAlternatives(
-                    subject=f"✉ Nouveau message de {message.sender.username}",
-                    body=strip_tags(
-                        render_to_string('messaging/email_notification.txt', context)
-                    ),
-                    from_email='notifications@moncaisson.com',
-                    to=[recipient.email],
-                    reply_to=[message.sender.email]
-                )
-                
-                # Version HTML de l'email
-                email.attach_alternative(
-                    render_to_string('messaging/email_notification.html', context),
-                    "text/html"
-                )
-                
-                # Envoi effectif
-                email.send(fail_silently=False)
-                logger.info(f"Notification envoyée à {recipient.email} pour le message {message_id}")
-                
+                send_single_notification(recipient, context)
             except Exception as e:
                 logger.error(f"Échec envoi à {recipient.email}: {str(e)}")
                 continue
-
+        
+        return f"Notifications envoyées pour le message {message_id}"
     except Message.DoesNotExist:
         logger.error(f"Message {message_id} introuvable")
+        raise
     except Exception as e:
-        logger.critical(f"Échec critique dans la tâche de notification: {str(e)}")
-        raise self.retry(exc=e)  # Réessai automatique selon la configuration
+        logger.critical(f"Erreur critique dans send_message_notification: {str(e)}")
+        raise self.retry(exc=e)
+
+def send_single_notification(recipient, context):
+    """Envoie une notification individuelle"""
+    subject = f"Nouveau message de {context['sender_name']}"
+    text_content = render_to_string('messaging/email_notification.txt', context)
+    html_content = render_to_string('messaging/email_notification.html', context)
+    
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=strip_tags(text_content),
+        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@moncaisson.com'),
+        to=[recipient.email],
+        reply_to=[context.get('reply_to', 'noreply@moncaisson.com')]
+    )
+    email.attach_alternative(html_content, "text/html")
+    email.send(fail_silently=False)
+    logger.info(f"Notification envoyée à {recipient.email}")
+
+@shared_task(name='messaging.dummy_task')
+def dummy_task():
+    """Tâche de test"""
+    return "Tâche de messagerie exécutée avec succès"
+

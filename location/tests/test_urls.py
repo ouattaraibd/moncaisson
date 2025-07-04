@@ -1,4 +1,5 @@
 # location/tests/test_urls.py
+import os
 from django.test import TestCase, Client
 from django.urls import reverse
 
@@ -29,3 +30,4 @@ class UrlsTest(TestCase):
             with self.subTest(url_name=url_name):
                 response = client.get(reverse(url_name))
                 self.assertEqual(response.status_code, 302)  # Redirection vers login
+

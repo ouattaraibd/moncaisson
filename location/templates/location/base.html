@@ -17,7 +17,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
     <!-- Progressive Web App -->
-    <link rel="manifest" href="{% static 'location/manifest.json' %}">
+    <link rel="manifest" href="{% static 'location/manifest.json' %}"
+      onerror="console.warn('Manifest non chargé'); this.remove()">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,9 +27,13 @@
     <!-- Font Awesome (version 6) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Votre CSS personnalisé -->
-    <link rel="stylesheet" href="{% static 'location/css/styles.css' %}?v=3.0">
+    <link href="{% static 'location/css/styles.css' %}?v=3.0" rel="stylesheet" 
+          onerror="this.onerror=null;this.href='https://fallback.example.com/styles.css'">
     <!-- Favicon -->
-    <link rel="icon" href="{% static 'location/images/favicon.ico' %}">
+    <link rel="icon" href="{% static 'location/images/favicon.ico' %}" 
+          onerror="this.onerror=null;this.href='{% static 'location/images/default-favicon.ico' %}'">
+</head>
+<body>
     <style>
         /* Styles supplémentaires pour la nouvelle mise en page */
         .sidebar {
@@ -313,15 +318,18 @@
     <!-- Service Worker Registration -->
     <script>
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('{% static "location/js/service-worker.js" %}')
-                .then(registration => {
-                    console.log('ServiceWorker enregistré avec succès:', registration.scope);
-                })
-                .catch(error => {
-                    console.log("Échec de l'enregistrement du ServiceWorker:", error);
-                });
-        });
+        fetch("{% static 'location/js/service-worker.js' %}")
+            .then(response => {
+                if (response.ok) {
+                    navigator.serviceWorker.register('{% static "location/js/service-worker.js" %}')
+                        .then(registration => {
+                            console.log('ServiceWorker enregistré:', registration.scope);
+                        });
+                }
+            })
+            .catch(error => {
+                console.warn("ServiceWorker non trouvé");
+            });
     }
     </script>
     
@@ -390,6 +398,18 @@
         window.addEventListener('offline', updateNetworkStatus);
         updateNetworkStatus();
     });
+    </script>
+	
+	 <!-- Scripts avec fallback -->
+    <script src="{% static 'location/js/scripts.js' %}" 
+            onerror="loadFallbackScript()"></script>
+    
+    <script>
+    function loadFallbackScript() {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.example.com/fallback-scripts.js';
+        document.body.appendChild(script);
+    }
     </script>
 
     <!-- Inclusion du widget chatbot -->

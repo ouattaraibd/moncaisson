@@ -220,3 +220,4 @@ class PaymentService:
         except requests.RequestException as e:
             logger.error(f"Erreur remboursement CinetPay: {str(e)}")
             return {'success': False, 'error': str(e)}
+

@@ -24,7 +24,7 @@ class LocationConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'location'
     label = 'location'
-    verbose_name = "Gestion de Location"
+    verbose_name = "Location de véhicules"
 
     def ready(self):
         """Initialisation différée après chargement complet"""
@@ -146,3 +146,4 @@ class LocationConfig(AppConfig):
         except Exception as e:
             logger.error(f"Erreur init messaging extras: {e}", exc_info=True)
             raise
+

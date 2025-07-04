@@ -145,3 +145,4 @@ def user_photo(user):
     if user.photo:
         return user.photo.url
     return os.path.join(settings.STATIC_URL, 'images/default-profile.png')
+

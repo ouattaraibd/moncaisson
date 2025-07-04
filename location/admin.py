@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.db import transaction
 from django.utils.html import format_html
 import json
+from honeypot.models import BlockedIP
 from django.urls import reverse
 from django.utils import timezone
 from import_export import resources
@@ -657,3 +658,7 @@ class DeliveryRequestAdmin(admin.ModelAdmin):
             <p><strong>Instructions spéciales:</strong> {}</p>
         """, obj.pickup_address, obj.delivery_address, obj.special_instructions or "Aucune")
     delivery_details.short_description = "Détails de livraison"
+    
+    
+    
+

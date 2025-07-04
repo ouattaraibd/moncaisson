@@ -252,3 +252,4 @@ def annuler_reservation(request, reservation_id):
     reservation.statut = 'annule'
     reservation.save()
     return redirect('mes_reservations')
+

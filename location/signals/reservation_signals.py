@@ -75,3 +75,4 @@ def update_reservation_on_payment(sender, instance, created, **kwargs):
             [reservation.client.email],
             fail_silently=True
         )
+

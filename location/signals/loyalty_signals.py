@@ -42,3 +42,4 @@ def update_trust_on_dispute(sender, instance, **kwargs):
     """Met à jour le score après un litige"""
     TrustService.update_user_trust_score(instance.reservation.client)
     TrustService.update_user_trust_score(instance.reservation.voiture.proprietaire)
+

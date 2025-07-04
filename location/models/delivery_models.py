@@ -167,3 +167,4 @@ class DeliveryPricing(models.Model):
     distance_max = models.PositiveIntegerField()
     base_price = models.DecimalField(max_digits=6, decimal_places=2)
     price_per_km = models.DecimalField(max_digits=6, decimal_places=2)
+

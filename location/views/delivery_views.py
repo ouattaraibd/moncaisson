@@ -98,3 +98,4 @@ class DeliveryPDFView(LoginRequiredMixin, ListView):
             raise Exception('Fichier non trouvé: %s' % path)
             
         return path
+
